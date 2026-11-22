@@ -4,7 +4,7 @@ RUAS, StepSafe, dan Health adalah aplikasi independen. Integrasi dilakukan melal
 
 | Penyedia | Informasi yang dibutuhkan | Status |
 | --- | --- | --- |
-| RUAS | Kondisi jalan, evaluasi risiko, rekomendasi rute, identitas pengguna RUAS | Kontrak belum disepakati |
+| RUAS | Kondisi jalan, evaluasi risiko, rekomendasi rute, identitas pengguna RUAS | Endpoint awal laporan tersedia secara provisional dan kontrak final belum disepakati |
 | StepSafe | Walkability Index, kondisi trotoar, aksesibilitas jalur pejalan kaki | Kontrak belum disepakati |
 | Health | Informasi fasilitas kesehatan sebagai tujuan perjalanan | Kelompok penyedia dan kontrak belum dikonfirmasi |
 
