@@ -23,7 +23,7 @@ export default function RouteRecommendationScreen({ navigation }) {
     recommendRoutes().catch(error => { if (current) setMessage(error.message); }).finally(() => { if (current) setBusy(false); });
     return () => { current = false; };
   }, [recommendRoutes]);
-  function editTrip() { navigation.popTo('Main', { screen: 'Home' }); }
+  function editTrip() { navigation.popTo('MainTabs', { screen: 'Home' }); }
   return <Screen>
     <Header title="Rekomendasi Rute" subtitle="Temukan perjalanan dengan risiko lebih rendah" navigation={navigation} />
     <DataNotice />
@@ -33,7 +33,7 @@ export default function RouteRecommendationScreen({ navigation }) {
     <SectionHeading>Bandingkan Alternatif</SectionHeading>
     {busy && <AppText variant="caption" color={theme.colors.muted}>Meminta alternatif perjalanan…</AppText>}
     <Feedback message={message} />
-    {!busy && !routes.length && <Card><AppText variant="caption" color={theme.colors.muted}>Alternatif belum tersedia untuk perjalanan ini. Waktu, jarak, dan skor risiko tidak dihitung oleh aplikasi mobile.</AppText><Button title="Ubah perjalanan" variant="outline" onPress={editTrip} /></Card>}
+    {!busy && !routes.length && <Card><AppText variant="caption" color={theme.colors.muted}>Rekomendasi rute blocked: backend RUAS belum menyediakan endpoint rute. Waktu, jarak, dan risiko tidak dihitung oleh mobile.</AppText><Button title="Ubah perjalanan" variant="outline" onPress={editTrip} /></Card>}
     {routes.map(route => <Pressable key={route.id} accessibilityRole="button" accessibilityLabel={`Pilih ${route.name}`} accessibilityState={{ selected: selectedRouteId === route.id }} aria-pressed={selectedRouteId === route.id} onPress={() => setSelectedRouteId(route.id)}>
       <GradientCard colors={selectedRouteId === route.id ? [theme.colors.surface, '#F0F3FF'] : [theme.colors.surface, theme.colors.surface]} style={{ borderWidth: 1, borderLeftWidth: selectedRouteId === route.id ? 4 : 1, borderColor: selectedRouteId === route.id ? theme.colors.primary : theme.colors.border, borderRadius: 13, gap: 8, padding: 14 }}>
         <View style={layout.between}><AppText variant="label">{route.name}</AppText>{route.recommended && <Badge>Direkomendasikan</Badge>}<AppText variant="label">{route.durationLabel}</AppText></View>
@@ -52,6 +52,6 @@ export default function RouteRecommendationScreen({ navigation }) {
       </>}
     </GradientCard>
     <Feedback message={selection.message} />
-    <Button title={selected ? `Aktifkan ${selected.name}` : 'Pilih alternatif rute'} disabled={!selected} onPress={() => selection.run(async () => activateRoute(), () => navigation.popTo('Main', { screen: 'Home' }))} />
+    <Button title={selected ? `Aktifkan ${selected.name}` : 'Pilih alternatif rute'} disabled={!selected} onPress={() => selection.run(async () => activateRoute(), () => navigation.popTo('MainTabs', { screen: 'Home' }))} />
   </Screen>;
 }

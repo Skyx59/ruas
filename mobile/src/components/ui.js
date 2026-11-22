@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,10 +11,11 @@ export function AppText({ children, variant = 'body', color, style, ...props }) 
 }
 
 export function Screen({ children, contentStyle, scroll = true }) {
-  const insets = useSafeAreaInsets();
-  const paddingBottom = Math.max(24, insets.bottom + 16);
-  const content = scroll ? <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom }, contentStyle]}>{children}</ScrollView> : <View style={[styles.content, styles.flex, { paddingBottom }, contentStyle]}>{children}</View>;
-  return <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>{content}</KeyboardAvoidingView></SafeAreaView>;
+  const navigation = useNavigation();
+  const isTab = navigation.getState().type === 'tab';
+  const paddingBottom = 16;
+  const content = scroll ? <ScrollView automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'} keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom }, contentStyle]}>{children}</ScrollView> : <View style={[styles.content, styles.flex, { paddingBottom }, contentStyle]}>{children}</View>;
+  return <SafeAreaView edges={isTab ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']} style={styles.screen}><KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? undefined : 'height'}>{content}</KeyboardAvoidingView></SafeAreaView>;
 }
 
 export function Header({ title, subtitle, navigation, trailing, brand = false }) {
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
   text: { color: theme.colors.text, flexShrink: 1 },
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: theme.colors.background },
-  content: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 24, gap: 16, flexGrow: 1 },
+  content: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, gap: 12, flexGrow: 1 },
   header: { gap: 4, marginBottom: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
   inputRow: { minHeight: 49, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: 10, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   input: { flex: 1, minWidth: 0, minHeight: 47, paddingVertical: 12, color: theme.colors.text, fontSize: 13, fontFamily: theme.fonts.regular, outlineStyle: 'none' },
   chips: { flexDirection: 'row', gap: 8 },
-  chip: { flex: 1, height: 36, borderRadius: 18, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
+  chip: { flex: 1, minWidth: 0, minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
   badge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 14, alignSelf: 'flex-start' },
   notice: { flexDirection: 'row', gap: 12, padding: 12, borderRadius: 12, alignItems: 'flex-start' },
 });

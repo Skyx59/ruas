@@ -26,7 +26,7 @@ export default function RegisterScreen({ navigation }) {
   return <Screen contentStyle={{ gap: 18 }}>
     <Header title="" navigation={navigation} />
     <Header title="Buat Akun RUAS" subtitle="Bergabung untuk membantu pengguna jalan." />
-    <Notice title="Data akun digunakan untuk login dan pelaporan" icon="shieldRegister" gradient />
+    <Notice title="Pendaftaran online belum tersedia" detail="Endpoint registrasi belum disediakan backend RUAS. Form dapat divalidasi, tetapi akun belum dapat dibuat dari aplikasi." icon="shieldRegister" gradient />
     <Field label="Nama Lengkap" placeholder="Masukkan nama lengkap" value={values.name} onChangeText={value => update('name', value)} autoComplete="name" error={errors.name} />
     <Field label="Email" placeholder="nama@email.com" value={values.email} onChangeText={value => update('email', value)} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" autoComplete="email" error={errors.email} />
     <Field label="Password" placeholder="Minimal 8 karakter" value={values.password} onChangeText={value => update('password', value)} password registration autoCapitalize="none" autoComplete="new-password" error={errors.password} />
@@ -34,6 +34,6 @@ export default function RegisterScreen({ navigation }) {
     <AppText variant="tiny" color={theme.colors.muted}>Password harus sesuai dan minimal 8 karakter.</AppText>
     <Feedback message={action.message} />
     {acceptedEmail ? <><AppText variant="caption" color={theme.colors.success}>Registrasi dikonfirmasi layanan RUAS. Silakan masuk dengan akun Anda.</AppText><Button title="Lanjut ke Login" onPress={() => navigation.replace('Login', { email: acceptedEmail })} /></> : <Button title="Daftar Akun" busy={action.busy} onPress={submit} />}
-    <View style={[layout.row, { justifyContent: 'center', marginTop: 'auto', paddingVertical: 22 }]}><AppText variant="caption" color={theme.colors.muted}>Sudah memiliki akun?</AppText><TextLink onPress={() => navigation.replace('Login')}>Masuk</TextLink></View>
+    <View style={[layout.row, { justifyContent: 'center', marginTop: 8, paddingVertical: 22 }]}><AppText variant="caption" color={theme.colors.muted}>Sudah memiliki akun?</AppText><TextLink onPress={() => navigation.replace('Login')}>Masuk</TextLink></View>
   </Screen>;
 }

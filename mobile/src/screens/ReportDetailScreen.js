@@ -10,7 +10,7 @@ import { useAction } from '../hooks/useAction';
 import { theme } from '../theme';
 
 export default function ReportDetailScreen({ route, navigation }) {
-  const { reports, demoEnabled, confirmReport } = useAppContext();
+  const { reports, demoEnabled, session, confirmReport } = useAppContext();
   const action = useAction();
   const report = reports.find(item => item.id === route.params?.reportId);
   const status = reportStatus[report?.status] || { label: 'Status belum dipetakan', tone: 'primary' };
@@ -31,9 +31,9 @@ export default function ReportDetailScreen({ route, navigation }) {
         <View style={layout.between}><AppText variant="caption" color={theme.colors.muted}>Laporan oleh</AppText><AppText variant="label">{report.reporterLabel}</AppText></View>
       </Card></View>
       <View style={layout.section}><SectionHeading>Deskripsi Kejadian</SectionHeading><AppText variant="caption" color={theme.colors.muted}>{report.description}</AppText></View>
-      <Notice title="Bantu verifikasi laporan" detail="Apakah kejadian masih terjadi?" icon="info" warning gradient />
+      <Notice title={session?.account?.role === 'ADMIN' ? 'Verifikasi laporan' : 'Konfirmasi kondisi'} detail={session?.account?.role === 'ADMIN' ? 'Setujui atau tolak laporan sesuai hasil pemeriksaan.' : 'Konfirmasi warga masih blocked: API hanya mendukung verifikasi oleh ADMIN.'} icon="info" warning gradient />
       <Feedback message={action.message} />
-      <View style={layout.row}><Button title="Masih Terjadi" style={layout.flex} busy={action.busy} onPress={() => action.run(() => confirmReport(report.id, 'ongoing'))} /><Button title="Sudah Selesai" variant="outline" style={layout.flex} disabled={action.busy} onPress={() => action.run(() => confirmReport(report.id, 'resolved'))} /></View>
+      <View style={layout.row}><Button title={session?.account?.role === 'ADMIN' ? 'Verifikasi' : 'Masih Terjadi'} style={layout.flex} busy={action.busy} onPress={() => action.run(() => confirmReport(report.id, session?.account?.role === 'ADMIN' ? 'verified' : 'ongoing'))} /><Button title={session?.account?.role === 'ADMIN' ? 'Tolak laporan' : 'Sudah Selesai'} variant="outline" style={layout.flex} disabled={action.busy} onPress={() => action.run(() => confirmReport(report.id, session?.account?.role === 'ADMIN' ? 'rejected' : 'resolved'))} /></View>
     </> : <Card><AppText variant="caption" color={theme.colors.muted}>Laporan tidak tersedia pada sumber data saat ini. Kembali ke peta dan pilih laporan yang tersedia.</AppText><Button title="Kembali" variant="outline" onPress={() => navigation.goBack()} /></Card>}
   </Screen>;
 }

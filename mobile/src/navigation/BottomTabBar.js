@@ -5,7 +5,7 @@ import { AppText } from '../components/ui';
 import V3Icon from '../components/V3Icon';
 import { theme } from '../theme';
 
-const items = { Home: ['Home', 'home'], Map: ['Peta', 'map'], ReportForm: ['Lapor', 'report'], Health: ['Faskes', 'facility'], Profile: ['Profil', 'profile'] };
+const items = { Home: ['Home', 'home'], Peta: ['Peta', 'map'], Lapor: ['Lapor', 'report'], Faskes: ['Faskes', 'facility'], Profil: ['Profil', 'profile'] };
 
 export default function BottomTabBar({ state, navigation }) {
   const insets = useSafeAreaInsets();
@@ -16,7 +16,7 @@ export default function BottomTabBar({ state, navigation }) {
     return () => { show.remove(); hide.remove(); };
   }, []);
   if (keyboardVisible) return null;
-  return <View style={{ flexDirection: 'row', backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: 8, paddingBottom: insets.bottom, minHeight: 77 + insets.bottom }}>
+  return <View style={{ flexDirection: 'row', backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: 8, paddingBottom: insets.bottom, minHeight: 65 + insets.bottom }}>
     {state.routes.map((route, index) => {
       const focused = state.index === index;
       const [label, icon] = items[route.name];

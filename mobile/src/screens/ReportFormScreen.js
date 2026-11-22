@@ -11,7 +11,7 @@ import { incidentTypes, severityLevels, validateReport } from '../utils/validati
 import { theme } from '../theme';
 
 export default function ReportFormScreen({ navigation }) {
-  const { reportLocation, setReportLocation, setMapSelection, submitReport } = useAppContext();
+  const { reportLocation, setReportLocation, submitReport, session } = useAppContext();
   const [type, setType] = useState('Banjir');
   const [severity, setSeverity] = useState('Sedang');
   const [description, setDescription] = useState('');
@@ -40,7 +40,7 @@ export default function ReportFormScreen({ navigation }) {
       setDescription('');
       setPhoto(null);
       setReportLocation(null);
-      navigation.navigate('ReportDetail', { reportId: report.id });
+      navigation.navigate('DetailLaporan', { reportId: report.id });
     });
   }
 
@@ -48,10 +48,10 @@ export default function ReportFormScreen({ navigation }) {
     <Header title="Lapor Kondisi Jalan" subtitle="Bagikan kondisi nyata untuk pengguna lain" />
     <DataNotice />
     <GradientCard colors={['#EDF1FF', theme.colors.background]} style={{ padding: 15, borderRadius: 13, gap: 8 }}>
-      <View style={layout.row}><V3Icon name="pinReport" /><View style={[layout.flex, { gap: 5 }]}><AppText variant="label">Lokasi Kejadian</AppText><AppText variant="tiny" color={theme.colors.muted}>{reportLocation ? `${reportLocation.label} · ${reportLocation.coordinate.latitude.toFixed(5)}, ${reportLocation.coordinate.longitude.toFixed(5)}` : 'Lokasi belum dipilih. GPS tidak diaktifkan otomatis.'}</AppText></View></View>
-      <View style={layout.between}><TextLink onPress={() => { setMapSelection('report'); navigation.navigate('Map'); }}>Pilih titik di peta →</TextLink><TextLink onPress={() => device.run(getDeviceLocation, setReportLocation)}>{device.busy ? 'Mencari…' : 'Gunakan GPS'}</TextLink></View>
+      <View style={layout.row}><V3Icon name="pinReport" /><View style={[layout.flex, { gap: 5 }]}><AppText variant="label">Lokasi Kejadian</AppText><AppText variant="tiny" color={theme.colors.muted}>{reportLocation?.label || 'Pilih lokasi kejadian di peta atau gunakan GPS.'}</AppText></View></View>
+      <View style={layout.between}><TextLink onPress={() => navigation.navigate('PilihLokasi', { selection: 'report' })}>Pilih titik di peta →</TextLink><TextLink onPress={() => device.run(getDeviceLocation, setReportLocation)}>{device.busy ? 'Mencari…' : 'Gunakan GPS'}</TextLink></View>
     </GradientCard>
-    <Feedback message={errors.location || device.message} />
+    <Feedback message={device.message || (!reportLocation ? errors.location : null)} />
     <View style={layout.group}><AppText variant="label">Jenis Kejadian</AppText><Chips options={incidentTypes} value={type} onChange={setType} /><Feedback message={errors.type} /></View>
     <View style={layout.group}><AppText variant="label">Tingkat Keparahan</AppText><Chips options={severityLevels} value={severity} onChange={setSeverity} tone={severity === 'Berat' ? 'danger' : severity === 'Ringan' ? 'success' : 'warning'} /><Feedback message={errors.severity} /></View>
     <View style={layout.group}><Field label="Deskripsi" placeholder="Contoh: genangan air di sebagian badan jalan, kendaraan harus melambat…" value={description} onChangeText={setDescription} multiline maxLength={300} inputStyle={{ minHeight: 100, textAlignVertical: 'top' }} error={errors.description} /><AppText variant="tiny" color={theme.colors.muted} style={{ textAlign: 'right', marginTop: -5 }}>{description.length} / 300 karakter</AppText></View>
@@ -64,8 +64,9 @@ export default function ReportFormScreen({ navigation }) {
       {photo && <><Image source={{ uri: photo.uri }} accessibilityLabel="Pratinjau foto yang dipilih, belum diunggah" style={{ width: '100%', height: 160, borderRadius: 12 }} /><TextLink onPress={() => setPhoto(null)}>Hapus foto</TextLink></>}
       <Feedback message={photoAction.message} />
     </View>
-    <Notice title="Laporan akan diverifikasi komunitas" detail="Pastikan informasi sesuai keadaan sebenarnya." />
+    <Notice title="Laporan diverifikasi ADMIN" detail="API saat ini menyimpan lokasi dan deskripsi. Jenis serta keparahan belum didukung; foto belum dapat diunggah." />
     <Feedback message={action.message} />
+    {!session && <TextLink onPress={() => navigation.navigate('Login')}>Masuk untuk mengirim laporan</TextLink>}
     <Button title="Kirim Laporan" onPress={submit} busy={action.busy} />
   </Screen>;
 }

@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import ApiService from '../services/ApiService';
 import { demoFacilities, demoReports, demoRoutes, demoTrip, demoWeather } from '../preview/demoData';
 import { validateTrip } from '../utils/validation';
+import { getDeviceLocation } from '../services/deviceLocation';
 
 export const AppContext = createContext(null);
 
@@ -15,6 +16,7 @@ export function AppProvider({ children }) {
   const [travelMode, setTravelModeState] = useState('vehicle');
   const [data, setData] = useState(emptyData);
   const [dataMessage, setDataMessage] = useState('');
+  const [locationMessage, setLocationMessage] = useState('');
   const [routes, setRoutes] = useState([]);
   const [selectedRouteId, setSelectedRouteId] = useState(null);
   const [activeRoute, setActiveRoute] = useState(null);
@@ -42,6 +44,8 @@ export function AppProvider({ children }) {
     const updates = Object.fromEntries(results.filter(result => result.status === 'fulfilled').map(result => result.value));
     setData(previous => ({ ...previous, ...updates }));
     setDataMessage(results.find(result => result.status === 'rejected')?.reason?.message || '');
+    const account = updates.profile?.account;
+    if (account) setSession(previous => previous && JSON.stringify(previous.account) !== JSON.stringify(account) ? { ...previous, account } : previous);
   }, [demoEnabled, session]);
 
   useEffect(() => {
@@ -49,9 +53,23 @@ export function AppProvider({ children }) {
     return () => { dataVersion.current += 1; };
   }, [refreshData]);
 
+  useEffect(() => {
+    if (demoEnabled) return;
+    let current = true;
+    getDeviceLocation().then(point => {
+      if (current) {
+        setLocationMessage('');
+        setTripState(previous => previous.origin.coordinate ? previous : { ...previous, origin: point });
+      }
+    }).catch(error => { if (current) setLocationMessage(error.message); });
+    return () => { current = false; };
+  }, [demoEnabled]);
+
   function updateTrip(key, point) {
     routeVersion.current += 1;
+    if (!['origin', 'destination'].includes(key)) return;
     setTripState(previous => ({ ...previous, [key]: point }));
+    setActiveRoute(null);
     setRoutes([]);
     setSelectedRouteId(null);
     setWalkability(null);
@@ -60,6 +78,7 @@ export function AppProvider({ children }) {
   function changeTravelMode(mode) {
     routeVersion.current += 1;
     setTravelModeState(mode);
+    setActiveRoute(null);
     setRoutes([]);
     setSelectedRouteId(null);
     setWalkability(null);
@@ -114,6 +133,7 @@ export function AppProvider({ children }) {
     const result = await ApiService.ruas.login(values);
     if (!result?.account?.id || !result.account.displayName) throw new Error('Adapter autentikasi belum menghasilkan sesi akun yang valid.');
     setData(emptyData());
+    if (demoEnabled) changeDataMode(false);
     setSession(result);
   }
 
@@ -159,7 +179,7 @@ export function AppProvider({ children }) {
       session, login, register, logout,
       demoEnabled, changeDataMode,
       reports, facilities, weather: demoEnabled ? demoWeather : data.weather, profile: data.profile,
-      dataMessage, refreshData,
+      dataMessage, locationMessage, refreshData,
       trip, updateTrip, travelMode, changeTravelMode,
       routes, selectedRouteId, setSelectedRouteId, activeRoute, recommendRoutes, activateRoute,
       walkability, loadWalkability,

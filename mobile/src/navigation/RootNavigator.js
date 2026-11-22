@@ -18,12 +18,12 @@ const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }} tabBar={props => <BottomTabBar {...props} />}>
+    <Tab.Navigator initialRouteName="Home" backBehavior="history" screenOptions={{ headerShown: false }} tabBar={props => <BottomTabBar {...props} />}>
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Map" component={MapScreen} />
-      <Tab.Screen name="ReportForm" component={ReportFormScreen} />
-      <Tab.Screen name="Health" component={HealthFacilitiesScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Peta" component={MapScreen} />
+      <Tab.Screen name="Lapor" component={ReportFormScreen} />
+      <Tab.Screen name="Faskes" component={HealthFacilitiesScreen} />
+      <Tab.Screen name="Profil" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -31,12 +31,13 @@ function MainTabs() {
 export default function RootNavigator() {
   return (
     <NavigationContainer theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: theme.colors.primary, background: theme.colors.background, card: theme.colors.surface, text: theme.colors.text, border: theme.colors.border } }}>
-      <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
-        <Stack.Screen name="Main" component={MainTabs} />
-        <Stack.Screen name="Routes" component={RouteRecommendationScreen} />
-        <Stack.Screen name="ReportDetail" component={ReportDetailScreen} options={{ title: 'Detail laporan' }} />
+      <Stack.Navigator initialRouteName="MainTabs" screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+        <Stack.Screen name="MainTabs" component={MainTabs} />
+        <Stack.Screen name="RekomendasiRute" component={RouteRecommendationScreen} />
+        <Stack.Screen name="DetailLaporan" component={ReportDetailScreen} options={{ title: 'Detail laporan' }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Login' }} />
-        <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Registrasi' }} />
+        <Stack.Screen name="PilihLokasi" component={MapScreen} options={{ presentation: 'modal', gestureEnabled: true, title: 'Pilih lokasi' }} />
+        <Stack.Screen name="Registrasi" component={RegisterScreen} options={{ title: 'Registrasi' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

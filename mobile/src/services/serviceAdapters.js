@@ -1,5 +1,7 @@
+import { ruasAdapter } from './ruasAdapter';
+
 export const serviceAdapters = {
-  ruas: null,
+  ruas: ruasAdapter,
   stepSafe: null,
   health: null,
 };

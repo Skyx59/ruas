@@ -5,14 +5,14 @@ import { serviceAdapters } from './serviceAdapters';
 
 const serviceNames = { ruas: 'RUAS', stepSafe: 'StepSafe', health: 'Health' };
 const operations = {
-  ruas: ['listReports', 'getWeather', 'recommendRoutes', 'createReport', 'confirmReport', 'login', 'register', 'logout', 'getProfile'],
+  ruas: ['listReports', 'getReport', 'getWeather', 'recommendRoutes', 'createReport', 'confirmReport', 'login', 'register', 'logout', 'getProfile'],
   stepSafe: ['getWalkability'],
   health: ['listFacilities'],
 };
 
 export class ContractUnavailableError extends Error {
   constructor(service, operation) {
-    super(`Kontrak ${serviceNames[service]} untuk ${operation} belum tersedia. Permintaan belum dikirim.`);
+    super(`Integrasi ${serviceNames[service]} untuk ${operation} belum didukung kontrak yang tersedia (blocked). Permintaan belum dikirim.`);
     this.name = 'ContractUnavailableError';
     this.code = 'CONTRACT_UNAVAILABLE';
   }

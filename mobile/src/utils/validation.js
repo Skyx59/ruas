@@ -13,9 +13,9 @@ export function parseCoordinate(latitude, longitude) {
 
 export function validateTrip(trip) {
   const errors = {};
-  if (!trip.origin.label.trim()) errors.origin = 'Tentukan titik asal perjalanan.';
-  if (!trip.destination.label.trim()) errors.destination = 'Tentukan tujuan perjalanan.';
-  if (trip.origin.label.trim() && trip.origin.label.trim().toLowerCase() === trip.destination.label.trim().toLowerCase()) errors.destination = 'Tujuan harus berbeda dengan titik asal.';
+  if (!isCoordinate(trip.origin?.coordinate)) errors.origin = 'Gunakan GPS atau pilih titik asal di peta.';
+  if (!isCoordinate(trip.destination?.coordinate)) errors.destination = 'Pilih tujuan di peta atau dari fasilitas kesehatan.';
+  if (isCoordinate(trip.origin?.coordinate) && isCoordinate(trip.destination?.coordinate) && Math.abs(trip.origin.coordinate.latitude - trip.destination.coordinate.latitude) < 0.00001 && Math.abs(trip.origin.coordinate.longitude - trip.destination.coordinate.longitude) < 0.00001) errors.destination = 'Tujuan harus berbeda dengan titik asal.';
   return errors;
 }
 
@@ -32,7 +32,9 @@ export function validateReport(draft) {
 export function validateCredentials(values, registration = false) {
   const errors = {};
   if (registration && !values.name?.trim()) errors.name = 'Nama lengkap wajib diisi.';
-  if (!values.email.trim()) errors.email = 'Email wajib diisi.';
+  if (!registration) {
+    if (!values.username?.trim()) errors.username = 'Username wajib diisi.';
+  } else if (!values.email.trim()) errors.email = 'Email wajib diisi.';
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errors.email = 'Masukkan alamat email yang valid.';
   if (!values.password) errors.password = 'Password wajib diisi.';
   else if (registration && values.password.length < 8) errors.password = 'Password minimal 8 karakter.';

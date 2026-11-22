@@ -1,33 +1,29 @@
-import { TextInput, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useAppContext } from '../hooks/useAppContext';
 import { useAction } from '../hooks/useAction';
 import { getDeviceLocation } from '../services/deviceLocation';
 import { theme } from '../theme';
-import { Button, Card, Feedback, TextLink, layout } from './ui';
+import { AppText, Button, Card, Feedback, TextLink, layout } from './ui';
 import V3Icon from './V3Icon';
 
 export default function TripForm({ navigation, onSubmit, errors = {} }) {
-  const { trip, updateTrip, setMapSelection } = useAppContext();
+  const { trip, updateTrip, locationMessage } = useAppContext();
   const action = useAction();
-  function pick(key) {
-    setMapSelection(key);
-    navigation.navigate('Map');
-  }
+  function pick(key) { navigation.navigate('PilihLokasi', { selection: key }); }
   return <Card>
     <View style={layout.row}>
       <V3Icon name="navigation" />
-      <TextInput accessibilityLabel="Asal perjalanan" placeholder="Titik asal perjalanan" placeholderTextColor={theme.colors.muted} value={trip.origin.label} onChangeText={label => updateTrip('origin', { label, coordinate: null })} style={{ flex: 1, minWidth: 0, minHeight: 30, fontFamily: theme.fonts.medium, fontSize: 13, color: theme.colors.text }} />
-      <TextLink onPress={() => action.run(getDeviceLocation, point => updateTrip('origin', point))}>{action.busy ? 'Mencari…' : trip.origin.source === 'gps' ? 'GPS aktif' : 'GPS'}</TextLink>
+      <Pressable accessibilityRole="button" accessibilityLabel="Pilih asal di peta" onPress={() => pick('origin')} style={{ flex: 1, paddingVertical: 8 }}><AppText variant="tiny" color={theme.colors.muted}>Asal perjalanan</AppText><AppText variant="label" numberOfLines={2}>{trip.origin.label || 'Menunggu GPS / pilih di peta'}</AppText></Pressable>
+      <TextLink onPress={() => action.run(getDeviceLocation, point => updateTrip('origin', point))}>{action.busy ? 'Mencari…' : 'GPS'}</TextLink>
     </View>
     <Feedback message={errors.origin} />
     <View style={layout.divider} />
     <View style={layout.row}>
       <V3Icon name="pinYellow" />
-      <TextInput accessibilityLabel="Tujuan perjalanan" placeholder="Ke mana tujuan Anda?" placeholderTextColor={theme.colors.muted} value={trip.destination.label} onChangeText={label => updateTrip('destination', { label, coordinate: null })} style={{ flex: 1, minWidth: 0, minHeight: 30, fontFamily: theme.fonts.regular, fontSize: 13, color: theme.colors.text }} />
+      <Pressable accessibilityRole="button" accessibilityLabel="Pilih tujuan di peta" onPress={() => pick('destination')} style={{ flex: 1, paddingVertical: 8 }}><AppText variant="tiny" color={theme.colors.muted}>Tujuan perjalanan</AppText><AppText variant="label" numberOfLines={2}>{trip.destination.label || 'Ketuk untuk memilih tujuan di peta'}</AppText></Pressable>
+      <TextLink onPress={() => navigation.navigate('Faskes')}>Faskes</TextLink>
     </View>
-    <Feedback message={errors.destination} />
-    <View style={layout.between}><TextLink onPress={() => pick('origin')}>Pilih asal di peta</TextLink><TextLink onPress={() => pick('destination')}>Pilih tujuan di peta</TextLink></View>
-    <Feedback message={action.message} />
+    <Feedback message={errors.destination || action.message || (!trip.origin.coordinate ? locationMessage : '')} />
     <Button title="Cari Alternatif Rute" onPress={onSubmit} icon="arrow" />
   </Card>;
 }
