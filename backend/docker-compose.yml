@@ -1,11 +1,13 @@
 services:
   core-service:
     build: ./core-service
+    image: ruas-core:0.2.0
     restart: unless-stopped
     cpus: 0.50
     mem_limit: 256m
     environment:
       RUAS_LOG_LEVEL: "${RUAS_LOG_LEVEL:-INFO}"
+      RUAS_JWT_SECRET: "${RUAS_JWT_SECRET:?Set RUAS_JWT_SECRET in the environment or env file}"
     expose:
       - "8000"
     volumes:

@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import UUID4
 
 from src.middleware.errors import ErrorResponse
+from src.modules.identity.dependencies import require_roles
+from src.modules.identity.models import Role
 
-from .models import ReportCreate, ReportPage, RoadReport
+from .models import ReportCreate, ReportPage, ReportVerification, RoadReport
 from .repository import ReportRepository
 
 router = APIRouter(prefix="/road-reports", tags=["Road reports (provisional)"])
@@ -21,7 +23,10 @@ Reports = Annotated[ReportRepository, Depends(get_repository)]
 @router.post(
     "",
     status_code=201,
+    dependencies=[Depends(require_roles(Role.USER, Role.ADMIN))],
     responses={
+        401: {"model": ErrorResponse},
+        403: {"model": ErrorResponse},
         201: {
             "headers": {
                 "Location": {
@@ -50,6 +55,21 @@ def list_reports(
 @router.get("/{report_id}", responses={404: {"model": ErrorResponse}})
 def get_report(report_id: UUID4, repository: Reports) -> RoadReport:
     report = repository.get(report_id)
+    if report is None:
+        raise HTTPException(404, "Road report not found.")
+    return report
+
+
+@router.patch(
+    "/{report_id}/verification",
+    summary="Verify or reject a report (ADMIN, provisional)",
+    dependencies=[Depends(require_roles(Role.ADMIN))],
+    responses={status: {"model": ErrorResponse} for status in (401, 403, 404)},
+)
+def verify_report(
+    report_id: UUID4, payload: ReportVerification, repository: Reports
+) -> RoadReport:
+    report = repository.set_verification(report_id, payload.verification_status)
     if report is None:
         raise HTTPException(404, "Road report not found.")
     return report

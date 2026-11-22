@@ -1,6 +1,22 @@
 # Laporan testing
 
-## Backend dan gateway
+## Authentication dan authorization
+
+Pengujian development pada 23 November 2026 menggunakan macOS ARM64, Python 3.12.3, Docker Engine 29.7.2 Linux ARM64, dan Docker Compose v5.4.0.
+
+| Pemeriksaan | Hasil aktual |
+| --- | --- |
+| Seluruh pytest backend | **42 lulus, 0 gagal**. Mencakup regresi API, login USER/ADMIN, kredensial salah dan akun nonaktif, klaim serta signature JWT, `401` dan `403`, pencegahan eskalasi role, limit login, OpenAPI, dan migrasi data. |
+| Seluruh test Jest mobile | **9 lulus, 0 gagal** pada Node.js 22.23.2. |
+| `pip check`, `docker compose config --quiet`, dan build | Lulus. Image `ruas-core:0.2.0` dibangun untuk `linux/arm64`, memakai UID/GID `10001:10001` dan berukuran sekitar 50 MB. |
+| Compose dan Nginx | Stack health lulus. Login, GET identitas, pembuatan laporan, `401` untuk request anonim, `403` untuk verifikasi oleh USER, dan `200` untuk ADMIN terverifikasi melalui gateway. |
+| Swagger UI di Chrome | Form **Authorize** berhasil login sebagai USER. **Try it out** pada `GET /api/auth/me` mengembalikan `200` melalui gateway lokal. |
+| CLI dengan terminal interaktif | Berhasil membuat USER dan ADMIN. Kedua akun berhasil dipakai login. |
+| Backup, staging, cutover, dan rollback lokal | Backup Online SQLite lolos `quick_check`. Staging pada salinan mempertahankan laporan lama dengan status awal `pending`. Upgrade, rollback ke image lama, dan upgrade ulang pada volume uji yang sama mempertahankan akun, status verifikasi, serta laporan dari kedua versi. |
+
+Pengujian menggunakan proyek Compose, volume, dan kredensial sementara di komputer development. Upgrade STB, migrasi production, dan smoke test HTTPS publik masih menunggu eksekusi operator.
+
+## Pemeriksaan historis backend dan gateway
 
 Pengujian development pada 23 November 2026 menggunakan macOS 26.5.2 ARM64, Python 3.12.3, Docker Desktop dengan Engine 29.7.2 Linux ARM64, Compose v5.4.0, dan Nginx 1.30.7.
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import UUID4, BaseModel, ConfigDict, Field
 
@@ -14,6 +15,13 @@ class ReportCreate(BaseModel):
 class RoadReport(ReportCreate):
     id: UUID4
     created_at: datetime
+    verification_status: Literal["pending", "verified", "rejected"]
+
+
+class ReportVerification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    verification_status: Literal["verified", "rejected"]
 
 
 class ReportPage(BaseModel):

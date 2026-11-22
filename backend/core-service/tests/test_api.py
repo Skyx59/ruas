@@ -13,26 +13,16 @@ REPORTS = "/api/road-reports"
 SAMPLE = {"latitude": -6.89, "longitude": 107.61, "description": "Genangan di tepi jalan"}
 
 
-@pytest.fixture
-def settings(tmp_path):
-    return Settings(db_path=tmp_path / "data" / "ruas.sqlite3")
-
-
-@pytest.fixture
-def client(settings):
-    with TestClient(create_app(settings)) as client:
-        yield client
-
-
-def test_health(client):
-    response = client.get("/api/health")
+def test_health(anonymous):
+    response = anonymous.get("/api/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
-def test_create_read_and_persist_across_app_instances(settings):
+def test_create_read_and_persist_across_app_instances(settings, make_user, authenticate):
     with TestClient(create_app(settings)) as client:
-        response = client.post(REPORTS, json=SAMPLE)
+        make_user()
+        response = client.post(REPORTS, json=SAMPLE, headers=authenticate(client))
         assert response.status_code == 201
         report = response.json()
         assert {key: report[key] for key in SAMPLE} == SAMPLE
@@ -138,18 +128,21 @@ def test_openapi_describes_api_and_validation_response(client):
     response = client.get("/api/openapi.json")
     assert response.status_code == 200
     paths = response.json()["paths"]
-    assert set(paths) == {"/api/health", REPORTS, f"{REPORTS}/{{report_id}}"}
+    assert {"/api/health", REPORTS, f"{REPORTS}/{{report_id}}"} <= set(paths)
     schema = paths[REPORTS]["post"]["responses"]["422"]["content"]["application/json"]["schema"]
     assert schema["$ref"] == "#/components/schemas/ErrorResponse"
     assert "/api/openapi.json" in client.get("/api/docs").text
 
 
-def test_environment_settings(monkeypatch, tmp_path):
+def test_environment_settings(monkeypatch, tmp_path, jwt_secret):
     db_path = tmp_path / "reports.sqlite3"
     monkeypatch.setenv("RUAS_DB_PATH", str(db_path))
     monkeypatch.setenv("RUAS_LOG_LEVEL", "warning")
 
-    assert Settings.from_environment() == Settings(db_path=db_path, log_level="WARNING")
+    monkeypatch.setenv("RUAS_JWT_SECRET", jwt_secret)
+    assert Settings.from_environment() == Settings(
+        db_path=db_path, log_level="WARNING", jwt_secret=jwt_secret
+    )
     with TestClient(create_app()) as client:
         assert client.get("/api/health").status_code == 200
     assert db_path.is_file()

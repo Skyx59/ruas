@@ -5,7 +5,7 @@ RUAS menyiapkan rekomendasi rute perkotaan dengan mempertimbangkan risiko banjir
 
 ## Status proyek
 
-Backend menyediakan health check dan alur buat, daftar, serta baca detail laporan kondisi jalan. Kontrak laporan bersifat sementara (*provisional*) dan menunggu persetujuan kelompok. Mobile menggunakan Expo JavaScript dengan navigasi Stack + Tab dan tujuh layar placeholder.
+Backend menyediakan health check, login OAuth2 Bearer JWT, identitas pengguna, dan alur buat, daftar, serta baca laporan kondisi jalan. Aksi verifikasi tersedia untuk ADMIN. Kontrak laporan bersifat sementara (*provisional*) dan menunggu persetujuan kelompok. Mobile menggunakan Expo JavaScript dengan navigasi Stack + Tab dan tujuh layar placeholder.
 
 Validasi awal mobile berhasil: konfigurasi Expo, kecocokan dependency, sembilan unit test, serta ekspor bundle JavaScript Android lokal. Aplikasi belum diuji pada perangkat dan belum dibangun menjadi APK. Hasil audit dependency dan batas pemeriksaan dicatat di [laporan testing](docs/testing/README.md).
 
@@ -74,17 +74,19 @@ Client ── HTTPS ── Cloudflare Tunnel ── localhost:80 ── Nginx
                                                  SQLite di volume Docker
 ```
 
-RUAS memakai modular monolith berbasis Python 3.12, FastAPI, Pydantic v2, Uvicorn, dan SQLite. Satu core service menampung Road Condition Management, Route Recommendation, Environmental Data Integration, serta Identity and Access Management. Road Condition Management menyediakan laporan yang persisten. Tiga modul lainnya masih berupa struktur kode. Nginx Alpine menjadi gateway HTTP dan mempertahankan prefix `/api` saat meneruskan request. Cloudflare Tunnel yang sudah berjalan pada STB menangani akses publik HTTPS.
+RUAS memakai modular monolith berbasis Python 3.12, FastAPI, Pydantic v2, Uvicorn, dan SQLite. Satu core service menampung Road Condition Management, Route Recommendation, Environmental Data Integration, serta Identity and Access Management. Road Condition Management menyimpan laporan dan status verifikasi. Identity and Access Management menyediakan akun SQLite, Argon2id, access token JWT dengan masa berlaku 30 menit, dan RBAC USER/ADMIN. Route Recommendation dan Environmental Data Integration masih berupa struktur kode. Nginx Alpine menjadi gateway HTTP dan mempertahankan prefix `/api` saat meneruskan request. Cloudflare Tunnel yang sudah berjalan pada STB menangani akses publik HTTPS.
 
 Compose membatasi core service ke 0,5 CPU dan 256 MiB, serta gateway ke 0,25 CPU dan 64 MiB. Port 80 diikat ke loopback host untuk Cloudflared. Core service berada di network internal dan menggunakan volume `core-data` untuk SQLite.
 
 ## Menjalankan backend
 
-Dari root repository, jalankan Docker Compose dan periksa health melalui gateway.
+Dari root repository, masuk ke `backend/` lalu buat `.env` dengan secret acak untuk instalasi baru. Jika file sudah tersedia, pertahankan isinya dan pastikan variabel `RUAS_JWT_SECRET` ada. Jalankan Compose dan periksa health melalui gateway.
 
 ```sh
-docker compose -f backend/docker-compose.yml config --quiet
-docker compose -f backend/docker-compose.yml up -d --build --wait
+cd backend
+(umask 077; set -C; python3 -c 'import secrets; print("RUAS_JWT_SECRET=" + secrets.token_hex(32))' > .env)
+docker compose config --quiet
+docker compose up -d --build --wait
 curl -4 -fsS http://localhost:80/api/health
 ```
 
@@ -93,13 +95,16 @@ Respons health yang diharapkan adalah `{"status":"ok"}`. Swagger UI tersedia di 
 | Method | Endpoint | Fungsi |
 | --- | --- | --- |
 | GET | `/api/health` | Memeriksa kesiapan API dan akses baca SQLite |
-| POST | `/api/road-reports` | Membuat laporan dengan koordinat dan deskripsi |
+| POST | `/api/auth/token` | Login dengan form dan menerima JWT |
+| GET | `/api/auth/me` | Membaca identitas akun yang login |
+| POST | `/api/road-reports` | Membuat laporan sebagai USER atau ADMIN |
 | GET | `/api/road-reports` | Membaca daftar dengan parameter `limit` dan `offset` |
 | GET | `/api/road-reports/{report_id}` | Membaca detail laporan menurut UUID |
+| PATCH | `/api/road-reports/{report_id}/verification` | Mengubah status verifikasi sebagai ADMIN |
 | GET | `/api/docs` | Membuka Swagger UI |
 | GET | `/api/openapi.json` | Membaca skema OpenAPI |
 
-Contoh payload, respons, dan status error tersedia di [Kontrak API](docs/api/README.md). Untuk deployment Armbian, ikuti [runbook STB](docs/deployment/README.md), termasuk verifikasi ARM64, staging pada port 18080, cutover ke port 80, dan rollback dengan container lama. Hasil pengujian lokal dicatat di [laporan testing](docs/testing/README.md).
+Contoh payload, respons, dan status error tersedia di [Kontrak API](docs/api/README.md). Buat akun demo melalui CLI interaktif, lalu login melalui tombol **Authorize** di Swagger UI. Untuk STB existing, gunakan panduan upgrade dengan backup SQLite, staging terpisah, dan rollback menggunakan volume yang sama. [Modul Identity](backend/core-service/src/modules/identity/README.md) · [Runbook STB](docs/deployment/README.md#upgrade-stb-existing-ke-authentication) · [Laporan testing](docs/testing/README.md)
 
 ## Aplikasi mobile
 
@@ -158,4 +163,4 @@ Sebelum build, tetapkan Android application/package ID yang disepakati, hubungka
 - [Deployment STB](docs/deployment/README.md): preflight, staging, cutover, dan rollback.
 - `docs/demo/`: tempat materi demo setelah tersedia.
 
-Kelompok masih perlu menetapkan kontrak dan versi REST, model serta verifikasi laporan, kontrol akses, kebijakan data, sumber data lingkungan, dan aturan pembobotan risiko. Fitur rekomendasi, pembobotan dan integrasi cuaca/banjir, autentikasi/otorisasi, serta integrasi StepSafe dan Health belum diimplementasikan. README dan tautan dokumentasinya dapat digunakan sebagai materi README.pdf TST.
+Kelompok masih perlu menetapkan kontrak dan versi REST final, aturan moderasi dan transisi status laporan, kebijakan akun dan publikasi data, sumber data lingkungan, serta pembobotan risiko. Akses baca publik masih provisional untuk demo. Rekomendasi rute, pembobotan risiko, integrasi cuaca/banjir, serta integrasi StepSafe dan Health masih menunggu kontrak dan aturan domain. README dan tautan dokumentasinya dapat digunakan sebagai materi README.pdf TST.

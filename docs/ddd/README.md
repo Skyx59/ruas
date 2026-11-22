@@ -1,6 +1,6 @@
 # DDD RUAS
 
-Road Condition Management sudah menyediakan alur buat, daftar, dan baca laporan dengan kontrak sementara. Model domain rinci, verifikasi laporan, dan tiga konteks lain menunggu keputusan kelompok.
+Road Condition Management menyediakan alur buat, daftar, dan baca laporan, serta perubahan status verifikasi oleh ADMIN. Identity and Access Management menyediakan login JWT dan RBAC. Aturan moderasi serta rincian domain masih provisional. Route Recommendation dan Environmental Data Integration menunggu keputusan kelompok.
 
 | Bounded context | Cakupan |
 | --- | --- |
