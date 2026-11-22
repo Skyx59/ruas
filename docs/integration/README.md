@@ -15,3 +15,5 @@ Tentukan pemilik API, base URL publik, versi kontrak, skema data, autentikasi, k
 Base URL mobile disediakan melalui tiga variabel `EXPO_PUBLIC_*_API_BASE_URL` pada `mobile/.env.example`. Variabel tersebut masuk ke bundle aplikasi sehingga tidak boleh menyimpan rahasia. Jika penyedia mengharuskan API key rahasia, aksesnya harus melalui layanan yang aman di luar STB; jangan menanam key di aplikasi.
 
 Integrasi nyata dan pengujian lintas kelompok belum tersedia. Tidak ada mock integrasi sebagai pengganti API penyedia.
+
+Pekerjaan mobile Person B butir 1–3, kebutuhan kontrak aktual, dan perbedaan DDD Health–Tourism dengan rencana StepSafe–Health dicatat di [handoff mobile](mobile-handoff.md). Preview UI memakai data contoh berlabel yang terpisah dari adapter; bukan respons API mitra atau bukti integrasi.

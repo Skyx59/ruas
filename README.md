@@ -5,9 +5,9 @@ RUAS menyiapkan rekomendasi rute perkotaan dengan mempertimbangkan risiko banjir
 
 ## Status proyek
 
-Repository ini berisi scaffold awal monorepo. Backend belum diimplementasikan. Mobile menggunakan template Expo JavaScript dengan navigasi Stack + Tab dan tujuh layar placeholder; fitur bisnis belum tersedia.
+Repository ini memakai struktur monorepo. Backend masih scaffold. Mobile sudah memiliki sembilan layar JavaScript/Expo berdasarkan Figma v3, navigasi Stack + Tab, state bersama, form dan validasi, serta antarmuka adapter RUAS, StepSafe, dan Health. Login dan operasi layanan nyata menunggu kontrak API yang terverifikasi. Lihat [README mobile](mobile/README.md) untuk menjalankan aplikasi dan membedakan mode layanan dari preview demo.
 
-Validasi awal mobile berhasil: konfigurasi Expo, kecocokan dependency, sembilan unit test, serta ekspor bundle JavaScript Android lokal. Aplikasi belum diuji pada perangkat dan belum dibangun menjadi APK. Hasil audit dependency dan batas pemeriksaan dicatat di [laporan testing](docs/testing/README.md).
+Pemeriksaan scaffold terdahulu dicatat di [laporan testing awal](docs/testing/README.md). Status implementasi Person B terbaru berada di README mobile; laporan testing formal dan APK belum tersedia.
 
 RUAS, StepSafe, dan kelompok Health & Wellbeing adalah tiga aplikasi independen dengan backend serta database masing-masing. Integrasi menggunakan kontrak REST, tanpa database bersama atau penggabungan source code.
 
@@ -63,7 +63,7 @@ Direktori kosong memiliki `.gitkeep`. Tidak ada konfigurasi workspace Node di ro
 
 Target runtime STB Armbian: core service dalam Docker, gateway Nginx, Cloudflare Tunnel untuk akses HTTPS, serta komponen pendukung yang diperlukan. Frontend, mobile build, model AI berat, dan layanan integrasi antarkelompok tidak dijalankan pada STB. Dockerfile, Compose, konfigurasi gateway/tunnel, dan perintah menjalankan backend **belum tersedia**. Tidak ada deployment atau perubahan STB dalam scaffold ini.
 
-`mobile/` menggunakan JavaScript, React Native, dan Expo. Tab memisahkan Beranda dan Peta, Rekomendasi Rute, Form Laporan, Fasilitas Kesehatan, serta Akun/Profil. Stack menyediakan Detail dan Konfirmasi Laporan serta Login. Semua layar menampilkan status scaffold. Context sesi awal bukan implementasi autentikasi, dan tombol navigasi tidak mengirim laporan atau melakukan login.
+`mobile/` menggunakan JavaScript, React Native, dan Expo. Tab memisahkan Home, Peta, Lapor, Faskes, dan Profil. Stack menyediakan Rekomendasi Rute, Detail Laporan, Login, dan Registrasi. State sesi hanya dapat berasal dari adapter autentikasi nyata; tidak ada akun atau login demo palsu. Data contoh untuk preview diberi label dan tidak menjadi pengganti integrasi API. Ketergantungan Person A/mitra dicatat di [handoff integrasi](docs/integration/mobile-handoff.md), termasuk perbedaan Health–Tourism pada DDD PDF dengan rencana StepSafe–Health.
 
 ## Persyaratan pengembangan mobile
 
@@ -83,7 +83,7 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 npm start
 ```
 
-Salin environment hanya jika `.env` belum ada. Base URL boleh tetap kosong untuk membuka layar scaffold. Untuk pemanggilan nyata, isi URL resmi dari masing-masing kelompok; endpoint dan method domain menunggu kontrak final. Nilai kosong menyebabkan client menolak request, bukan mengarah ke server contoh.
+Salin environment hanya jika `.env` belum ada. Base URL boleh tetap kosong untuk membuka aplikasi; pilih Home → Lihat demo untuk preview data contoh berlabel. Untuk pemanggilan nyata, isi URL resmi dan implementasikan adapter berdasarkan kontrak masing-masing kelompok. Tidak ada request ke server contoh.
 
 ```text
 EXPO_PUBLIC_RUAS_API_BASE_URL=
@@ -101,7 +101,7 @@ npx expo install --check
 npm test -- --runInBand
 ```
 
-Pengujian ini hanya untuk scaffold; belum membuktikan fitur bisnis, API nyata, atau perilaku pada perangkat. Form dan validasi, loading/error/empty, autentikasi, peta, pelaporan, dan rekomendasi rute belum diimplementasikan.
+Test yang sudah ada berasal dari scaffold; belum membuktikan fitur bisnis, API nyata, atau perilaku pada perangkat. UI, form/validasi, pemilihan lokasi/fasilitas, dan pilihan rute sudah tersedia. Autentikasi serta pelaporan/rekomendasi nyata menunggu backend. Penyelesaian loading/error/empty menyeluruh, laporan testing formal, dan release tetap ditunda.
 
 ## Persiapan APK
 
@@ -117,4 +117,4 @@ Sebelum build, tetapkan Android application/package ID yang disepakati, hubungka
 - [Testing](docs/testing/README.md): status verifikasi dan checklist PWAM.
 - `docs/demo/`: tempat materi demo setelah tersedia.
 
-Langkah berikutnya adalah memilih stack backend yang sesuai resource dan arsitektur STB, menyepakati kontrak REST serta mekanisme autentikasi ketiga aplikasi, lalu mengimplementasikan satu alur RUAS secara bertahap. Detail aturan pembobotan risiko harus disepakati sebelum dibuat. Repository ini belum menjalankan fitur bisnis, deployment, commit, atau push otomatis.
+Langkah berikutnya adalah Person A memilih stack backend yang sesuai STB dan menyepakati kontrak REST/autentikasi dengan mitra, lalu mengisi adapter dan memverifikasi satu alur end-to-end. Detail aturan pembobotan risiko tetap menjadi tanggung jawab layanan RUAS. Tidak ada deployment, commit, atau push otomatis dalam pekerjaan mobile ini.

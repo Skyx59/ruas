@@ -19,6 +19,23 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "RUAS menggunakan lokasi saat Anda memilih titik perjalanan atau kejadian."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "RUAS menggunakan foto yang Anda pilih sebagai bukti laporan kondisi jalan.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ]
   }
 }
