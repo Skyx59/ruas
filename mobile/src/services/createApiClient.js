@@ -18,7 +18,12 @@ export function createApiClient(baseUrl, serviceName) {
       const response = await fetch(`${baseUrl.replace(/\/+$/, '')}${path}`, options);
 
       if (!response.ok) {
-        throw new Error(`${serviceName}: HTTP ${response.status}`);
+        let detail;
+        try { detail = await response.json(); } catch { detail = null; }
+        const error = new Error(detail?.error?.message || `${serviceName}: HTTP ${response.status}`);
+        error.status = response.status;
+        error.issues = detail?.error?.issues;
+        throw error;
       }
 
       return response;

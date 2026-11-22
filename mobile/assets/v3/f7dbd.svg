@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="33.5" height="33.5" viewBox="0 0 33.5 33.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group">
+<path id="Vector" d="M16.75 31.75C25.0343 31.75 31.75 25.0343 31.75 16.75C31.75 8.46573 25.0343 1.75 16.75 1.75C8.46573 1.75 1.75 8.46573 1.75 16.75C1.75 25.0343 8.46573 31.75 16.75 31.75Z" fill="#243E87" stroke-width="3.5" stroke="white"/>
+<path id="Vector_2" d="M11.65 9.25H21.85C22.5127 9.25 23.05 9.78726 23.05 10.45V24.05C23.05 24.7127 22.5127 25.25 21.85 25.25H11.65C10.9873 25.25 10.45 24.7127 10.45 24.05V10.45C10.45 9.78726 10.9873 9.25 11.65 9.25Z" stroke-width="1.7" stroke="white"/>
+<g id="Vector_3">
+<path d="M14.75 13.75H15.75ZM19.25 13.75H20.25ZM14.75 17.25H15.75ZM19.25 17.25H20.25ZM15.75 23.75V20.75H18.75V23.75" fill="black"/>
+<path d="M14.75 13.75H15.75M19.25 13.75H20.25M14.75 17.25H15.75M19.25 17.25H20.25M15.75 23.75V20.75H18.75V23.75" stroke-width="1.7" stroke-linecap="round" stroke="white"/>
+</g>
+</g>
+</svg>

@@ -5,9 +5,11 @@ RUAS menyiapkan rekomendasi rute perkotaan dengan mempertimbangkan risiko banjir
 
 ## Status proyek
 
-Repository ini berisi scaffold awal monorepo. Backend belum diimplementasikan. Mobile menggunakan template Expo JavaScript dengan navigasi Stack + Tab dan tujuh layar placeholder; fitur bisnis belum tersedia.
+Backend menyediakan health check, login OAuth2 Bearer JWT, identitas pengguna, dan alur buat, daftar, serta baca laporan kondisi jalan. Aksi verifikasi tersedia untuk ADMIN. Kontrak laporan bersifat sementara (*provisional*) dan menunggu persetujuan kelompok. Mobile menggunakan Expo JavaScript dengan navigasi Stack + Tab dan tujuh layar placeholder.
 
-Validasi awal mobile berhasil: konfigurasi Expo, kecocokan dependency, sembilan unit test, serta ekspor bundle JavaScript Android lokal. Aplikasi belum diuji pada perangkat dan belum dibangun menjadi APK. Hasil audit dependency dan batas pemeriksaan dicatat di [laporan testing](docs/testing/README.md).
+Mobile sudah memiliki sembilan layar JavaScript/Expo berdasarkan Figma v3, navigasi Stack + Tab, state bersama, form dan validasi, serta antarmuka adapter RUAS, StepSafe, dan Health. Adapter mobile belum terhubung ke API backend yang tersedia. Lihat [README mobile](mobile/README.md) untuk menjalankan aplikasi dan membedakan mode layanan dari preview demo, serta [kontrak API](docs/api/README.md) untuk kontrak backend provisional.
+
+Hasil pengujian backend dan pemeriksaan scaffold terdahulu dicatat di [laporan testing](docs/testing/README.md). Status implementasi Person B terbaru berada di README mobile; laporan testing formal fitur mobile dan APK belum tersedia.
 
 RUAS, StepSafe, dan kelompok Health & Wellbeing adalah tiga aplikasi independen dengan backend serta database masing-masing. Integrasi menggunakan kontrak REST, tanpa database bersama atau penggabungan source code.
 
@@ -17,9 +19,12 @@ RUAS, StepSafe, dan kelompok Health & Wellbeing adalah tiga aplikasi independen 
 ruas/
 ├── backend/
 │   ├── core-service/
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   ├── tests/
 │   │   └── src/
 │   │       ├── modules/
-│   │       │   ├── road-conditions/
+│   │       │   ├── road_conditions/
 │   │       │   ├── route-recommendation/
 │   │       │   ├── environment/
 │   │       │   └── identity/
@@ -27,6 +32,8 @@ ruas/
 │   │       ├── middleware/
 │   │       └── config/
 │   ├── gateway/
+│   │   └── default.conf
+│   ├── docker-compose.yml
 │   └── .env.example
 ├── mobile/
 │   ├── assets/
@@ -49,21 +56,61 @@ ruas/
 │   ├── api/
 │   ├── integration/
 │   ├── testing/
-│   └── demo/
+│   ├── demo/
+│   └── deployment/
 ├── LICENSE
 ├── README.md
 └── .gitignore
 ```
 
-Direktori kosong memiliki `.gitkeep`. Tidak ada konfigurasi workspace Node di root karena stack backend belum dipilih; dependency mobile dikelola dari `mobile/`.
+Direktori kosong memiliki `.gitkeep`. Dependency mobile dikelola di `mobile/` dan dependency Python di `backend/core-service/`.
 
-## Pembagian backend dan mobile
+## Arsitektur backend
 
-`backend/core-service/` menampung empat bounded context sebagai modul internal satu microservice: Road Condition Management, Route Recommendation, Environmental Data Integration, serta Identity and Access Management. Bahasa, framework, dan database belum ditentukan. `backend/gateway/` disediakan untuk Nginx.
+```text
+Client ── HTTPS ── Cloudflare Tunnel ── localhost:80 ── Nginx
+                                                         │ /api/*
+                                                         ▼
+                                                FastAPI + Uvicorn :8000
+                                                         │
+                                                 SQLite di volume Docker
+```
 
-Target runtime STB Armbian: core service dalam Docker, gateway Nginx, Cloudflare Tunnel untuk akses HTTPS, serta komponen pendukung yang diperlukan. Frontend, mobile build, model AI berat, dan layanan integrasi antarkelompok tidak dijalankan pada STB. Dockerfile, Compose, konfigurasi gateway/tunnel, dan perintah menjalankan backend **belum tersedia**. Tidak ada deployment atau perubahan STB dalam scaffold ini.
+RUAS memakai modular monolith berbasis Python 3.12, FastAPI, Pydantic v2, Uvicorn, dan SQLite. Satu core service menampung Road Condition Management, Route Recommendation, Environmental Data Integration, serta Identity and Access Management. Road Condition Management menyimpan laporan dan status verifikasi. Identity and Access Management menyediakan akun SQLite, Argon2id, access token JWT dengan masa berlaku 30 menit, dan RBAC USER/ADMIN. Route Recommendation dan Environmental Data Integration masih berupa struktur kode. Nginx Alpine menjadi gateway HTTP dan mempertahankan prefix `/api` saat meneruskan request. Cloudflare Tunnel yang sudah berjalan pada STB menangani akses publik HTTPS.
 
-`mobile/` menggunakan JavaScript, React Native, dan Expo. Tab memisahkan Beranda dan Peta, Rekomendasi Rute, Form Laporan, Fasilitas Kesehatan, serta Akun/Profil. Stack menyediakan Detail dan Konfirmasi Laporan serta Login. Semua layar menampilkan status scaffold. Context sesi awal bukan implementasi autentikasi, dan tombol navigasi tidak mengirim laporan atau melakukan login.
+Compose membatasi core service ke 0,5 CPU dan 256 MiB, serta gateway ke 0,25 CPU dan 64 MiB. Port 80 diikat ke loopback host untuk Cloudflared. Core service berada di network internal dan menggunakan volume `core-data` untuk SQLite.
+
+## Menjalankan backend
+
+Dari root repository, masuk ke `backend/` lalu buat `.env` dengan secret acak untuk instalasi baru. Jika file sudah tersedia, pertahankan isinya dan pastikan variabel `RUAS_JWT_SECRET` ada. Jalankan Compose dan periksa health melalui gateway.
+
+```sh
+cd backend
+(umask 077; set -C; python3 -c 'import secrets; print("RUAS_JWT_SECRET=" + secrets.token_hex(32))' > .env)
+docker compose config --quiet
+docker compose up -d --build --wait
+curl -4 -fsS http://localhost:80/api/health
+```
+
+Respons health yang diharapkan adalah `{"status":"ok"}`. Swagger UI tersedia di `http://127.0.0.1/api/docs` dan skema di `http://127.0.0.1/api/openapi.json`. Untuk menjalankan FastAPI langsung, gunakan langkah Python dan konfigurasi di [README core service](backend/core-service/README.md).
+
+| Method | Endpoint | Fungsi |
+| --- | --- | --- |
+| GET | `/api/health` | Memeriksa kesiapan API dan akses baca SQLite |
+| POST | `/api/auth/token` | Login dengan form dan menerima JWT |
+| GET | `/api/auth/me` | Membaca identitas akun yang login |
+| POST | `/api/road-reports` | Membuat laporan sebagai USER atau ADMIN |
+| GET | `/api/road-reports` | Membaca daftar dengan parameter `limit` dan `offset` |
+| GET | `/api/road-reports/{report_id}` | Membaca detail laporan menurut UUID |
+| PATCH | `/api/road-reports/{report_id}/verification` | Mengubah status verifikasi sebagai ADMIN |
+| GET | `/api/docs` | Membuka Swagger UI |
+| GET | `/api/openapi.json` | Membaca skema OpenAPI |
+
+Contoh payload, respons, dan status error tersedia di [Kontrak API](docs/api/README.md). Buat akun demo melalui CLI interaktif, lalu login melalui tombol **Authorize** di Swagger UI. Untuk STB existing, gunakan panduan upgrade dengan backup SQLite, staging terpisah, dan rollback menggunakan volume yang sama. [Modul Identity](backend/core-service/src/modules/identity/README.md) · [Runbook STB](docs/deployment/README.md#upgrade-stb-existing-ke-authentication) · [Laporan testing](docs/testing/README.md)
+
+## Aplikasi mobile
+
+`mobile/` menggunakan JavaScript, React Native, dan Expo. Tab memisahkan Home, Peta, Lapor, Faskes, dan Profil. Stack menyediakan Rekomendasi Rute, Detail Laporan, Login, dan Registrasi. State sesi hanya dapat berasal dari adapter autentikasi nyata; tidak ada akun atau login demo palsu. Data contoh untuk preview diberi label dan tidak menjadi pengganti integrasi API. Ketergantungan Person A/mitra dicatat di [handoff integrasi](docs/integration/mobile-handoff.md), termasuk perbedaan Health–Tourism pada DDD PDF dengan rencana StepSafe–Health.
 
 ## Persyaratan pengembangan mobile
 
@@ -83,7 +130,7 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 npm start
 ```
 
-Salin environment hanya jika `.env` belum ada. Base URL boleh tetap kosong untuk membuka layar scaffold. Untuk pemanggilan nyata, isi URL resmi dari masing-masing kelompok; endpoint dan method domain menunggu kontrak final. Nilai kosong menyebabkan client menolak request, bukan mengarah ke server contoh.
+Salin environment hanya jika `.env` belum ada. Base URL boleh tetap kosong untuk membuka aplikasi; pilih Home → Lihat demo untuk preview data contoh berlabel. Untuk pemanggilan nyata, isi URL resmi dan implementasikan adapter berdasarkan kontrak masing-masing kelompok. Tidak ada request ke server contoh.
 
 ```text
 EXPO_PUBLIC_RUAS_API_BASE_URL=
@@ -101,7 +148,7 @@ npx expo install --check
 npm test -- --runInBand
 ```
 
-Pengujian ini hanya untuk scaffold; belum membuktikan fitur bisnis, API nyata, atau perilaku pada perangkat. Form dan validasi, loading/error/empty, autentikasi, peta, pelaporan, dan rekomendasi rute belum diimplementasikan.
+Test mobile yang sudah ada berasal dari scaffold; belum membuktikan fitur bisnis, API nyata, atau perilaku pada perangkat. UI, form/validasi, pemilihan lokasi/fasilitas, dan pilihan rute sudah tersedia. Autentikasi serta pelaporan nyata di mobile menunggu implementasi adapter terhadap kontrak backend provisional; rekomendasi rute masih menunggu implementasi backend. Penyelesaian loading/error/empty menyeluruh, laporan testing formal fitur mobile, dan release tetap ditunda.
 
 ## Persiapan APK
 
@@ -114,7 +161,8 @@ Sebelum build, tetapkan Android application/package ID yang disepakati, hubungka
 - [DDD](docs/ddd/README.md): bounded context dan keputusan domain yang perlu dilengkapi.
 - [Kontrak API](docs/api/README.md): cakupan kontrak RUAS, StepSafe, dan Health.
 - [Kesepakatan integrasi](docs/integration/README.md): kepemilikan data dan batas antarkelompok.
-- [Testing](docs/testing/README.md): status verifikasi dan checklist PWAM.
+- [Testing](docs/testing/README.md): hasil backend lokal dan checklist PWAM.
+- [Deployment STB](docs/deployment/README.md): preflight, staging, cutover, dan rollback.
 - `docs/demo/`: tempat materi demo setelah tersedia.
 
-Langkah berikutnya adalah memilih stack backend yang sesuai resource dan arsitektur STB, menyepakati kontrak REST serta mekanisme autentikasi ketiga aplikasi, lalu mengimplementasikan satu alur RUAS secara bertahap. Detail aturan pembobotan risiko harus disepakati sebelum dibuat. Repository ini belum menjalankan fitur bisnis, deployment, commit, atau push otomatis.
+Kelompok masih perlu menetapkan kontrak dan versi REST final, aturan moderasi dan transisi status laporan, kebijakan akun dan publikasi data, sumber data lingkungan, serta pembobotan risiko. Akses baca publik masih provisional untuk demo. Rekomendasi rute, pembobotan risiko, integrasi cuaca/banjir, serta integrasi StepSafe dan Health masih menunggu kontrak dan aturan domain. README dan tautan dokumentasinya dapat digunakan sebagai materi README.pdf TST.

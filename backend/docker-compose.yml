@@ -1,0 +1,53 @@
+services:
+  core-service:
+    build: ./core-service
+    image: ruas-core:0.2.0
+    restart: unless-stopped
+    cpus: 0.50
+    mem_limit: 256m
+    environment:
+      RUAS_LOG_LEVEL: "${RUAS_LOG_LEVEL:-INFO}"
+      RUAS_JWT_SECRET: "${RUAS_JWT_SECRET:?Set RUAS_JWT_SECRET in the environment or env file}"
+    expose:
+      - "8000"
+    volumes:
+      - core-data:/app/data
+    networks:
+      - core
+    logging: &rotated-logs
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  gateway:
+    image: nginx:1.30-alpine
+    restart: unless-stopped
+    cpus: 0.25
+    mem_limit: 64m
+    depends_on:
+      core-service:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${RUAS_GATEWAY_PORT:-80}:80"
+    volumes:
+      - ./gateway/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - core
+      - edge
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "-T", "3", "http://127.0.0.1/api/health"]
+      interval: 30s
+      timeout: 4s
+      start_period: 5s
+      start_interval: 1s
+      retries: 3
+    logging: *rotated-logs
+
+networks:
+  core:
+    internal: true
+  edge:
+
+volumes:
+  core-data:
