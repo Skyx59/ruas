@@ -5,7 +5,7 @@ RUAS menyiapkan rekomendasi rute perkotaan dengan mempertimbangkan risiko banjir
 
 ## Status proyek
 
-Repository ini memakai struktur monorepo. Backend menyediakan health check, login OAuth2 Bearer JWT, identitas pengguna, dan alur buat, daftar, serta baca laporan kondisi jalan. Aksi verifikasi tersedia untuk ADMIN. Kontrak laporan bersifat sementara (*provisional*) dan menunggu persetujuan kelompok.
+Backend menyediakan health check, login OAuth2 Bearer JWT, identitas pengguna, dan alur buat, daftar, serta baca laporan kondisi jalan. Aksi verifikasi tersedia untuk ADMIN. Kontrak laporan bersifat sementara (*provisional*) dan menunggu persetujuan kelompok. Mobile menggunakan Expo JavaScript dengan navigasi Stack + Tab dan tujuh layar placeholder.
 
 Mobile sudah memiliki sembilan layar JavaScript/Expo berdasarkan Figma v3, navigasi Stack + Tab, state bersama, form dan validasi, serta antarmuka adapter RUAS, StepSafe, dan Health. Adapter mobile belum terhubung ke API backend yang tersedia. Lihat [README mobile](mobile/README.md) untuk menjalankan aplikasi dan membedakan mode layanan dari preview demo, serta [kontrak API](docs/api/README.md) untuk kontrak backend provisional.
 
@@ -166,5 +166,3 @@ Sebelum build, tetapkan Android application/package ID yang disepakati, hubungka
 - `docs/demo/`: tempat materi demo setelah tersedia.
 
 Kelompok masih perlu menetapkan kontrak dan versi REST final, aturan moderasi dan transisi status laporan, kebijakan akun dan publikasi data, sumber data lingkungan, serta pembobotan risiko. Akses baca publik masih provisional untuk demo. Rekomendasi rute, pembobotan risiko, integrasi cuaca/banjir, serta integrasi StepSafe dan Health masih menunggu kontrak dan aturan domain. README dan tautan dokumentasinya dapat digunakan sebagai materi README.pdf TST.
-
-Langkah berikutnya adalah menyelaraskan form dan model tampilan mobile dengan kontrak REST/autentikasi backend provisional, mengisi adapter, dan memverifikasi satu alur end-to-end. Detail aturan pembobotan risiko tetap menjadi tanggung jawab layanan RUAS. Tidak ada deployment, commit, atau push otomatis dalam pekerjaan mobile ini.
