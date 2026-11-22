@@ -1,0 +1,55 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from pydantic import UUID4
+
+from src.middleware.errors import ErrorResponse
+
+from .models import ReportCreate, ReportPage, RoadReport
+from .repository import ReportRepository
+
+router = APIRouter(prefix="/road-reports", tags=["Road reports (provisional)"])
+
+
+def get_repository(request: Request) -> ReportRepository:
+    return request.app.state.report_repository
+
+
+Reports = Annotated[ReportRepository, Depends(get_repository)]
+
+
+@router.post(
+    "",
+    status_code=201,
+    responses={
+        201: {
+            "headers": {
+                "Location": {
+                    "schema": {"type": "string"},
+                    "description": "Path of the created report",
+                }
+            }
+        }
+    },
+)
+def create_report(payload: ReportCreate, response: Response, repository: Reports) -> RoadReport:
+    report = repository.create(payload)
+    response.headers["Location"] = f"/api/road-reports/{report.id}"
+    return report
+
+
+@router.get("")
+def list_reports(
+    repository: Reports,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0, le=2_147_483_647)] = 0,
+) -> ReportPage:
+    return ReportPage(items=repository.list(limit, offset), limit=limit, offset=offset)
+
+
+@router.get("/{report_id}", responses={404: {"model": ErrorResponse}})
+def get_report(report_id: UUID4, repository: Reports) -> RoadReport:
+    report = repository.get(report_id)
+    if report is None:
+        raise HTTPException(404, "Road report not found.")
+    return report

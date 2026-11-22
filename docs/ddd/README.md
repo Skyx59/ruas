@@ -1,6 +1,6 @@
 # DDD RUAS
 
-Status: batas konteks awal; model domain rinci belum diimplementasikan.
+Road Condition Management sudah menyediakan alur buat, daftar, dan baca laporan dengan kontrak sementara. Model domain rinci, verifikasi laporan, dan tiga konteks lain menunggu keputusan kelompok.
 
 | Bounded context | Cakupan |
 | --- | --- |

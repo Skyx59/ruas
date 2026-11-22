@@ -1,5 +1,27 @@
 # Laporan testing
 
+## Backend dan gateway
+
+Pengujian development pada 23 November 2026 menggunakan macOS 26.5.2 ARM64, Python 3.12.3, Docker Desktop dengan Engine 29.7.2 Linux ARM64, Compose v5.4.0, dan Nginx 1.30.7.
+
+| Pemeriksaan | Hasil aktual |
+| --- | --- |
+| `python -m pytest -q` | **21 lulus, 0 gagal**. Mencakup health, pembuatan laporan, daftar dan detail, validasi koordinat, deskripsi, UUID, pagination dan JSON, format error, OpenAPI, konfigurasi, serta persistensi lintas instance aplikasi. |
+| Uvicorn langsung dari virtualenv | HTTP 200 pada `http://127.0.0.1:8000/api/health` dengan SQLite temporer. |
+| `docker compose config --quiet` | Lulus untuk port 80 dan port staging 18080. |
+| `docker compose build core-service` | Lulus untuk `linux/arm64`. Docker melaporkan image sekitar 49 MB dan user `10001:10001`. |
+| Health Compose dan `nginx -t` | Core dan gateway `healthy`, konfigurasi Nginx valid. |
+| `curl -4 -fsS http://localhost:80/api/health` | HTTP 200 dengan `{"status":"ok"}` melalui Nginx → FastAPI → SQLite. Host header publik dan skema OpenAPI juga diuji secara lokal. |
+| Laporan melalui gateway | POST valid `201`, daftar dan detail `200`, POST dengan koordinat salah `422`, dan root gateway `404`. |
+| Persistensi dan pindah port | Laporan tetap dapat dibaca setelah core service dibuat ulang. Gateway diuji pada 18080 lalu 80 dengan core service dan volume yang sama. |
+| Simulasi cutover dan rollback lokal | Nginx uji tetap melayani port 80 selama staging. Setelah cutover, RUAS melayani port 80. Rollback memulai kembali container Nginx uji yang sama dan data RUAS tetap tersedia. |
+| Batas resource di Docker | `docker inspect` mengonfirmasi core 0,50 CPU/256 MiB, gateway 0,25 CPU/64 MiB, core tanpa port host dan gateway hanya di `127.0.0.1`. |
+| `pip check` | Lulus di virtualenv pengembangan dan image runtime. |
+
+`localhost` tanpa `-4` memilih Apache yang sudah berjalan pada loopback IPv6 di komputer uji dan mengembalikan 404. Probe `-4` dan `127.0.0.1` mengarah ke gateway RUAS. Pengujian di STB ZTE B860H, cutover container existing, dan verifikasi HTTPS lewat Cloudflare adalah langkah setelah deployment. Hasilnya masih menunggu eksekusi operator di server.
+
+## Pemeriksaan historis mobile
+
 Pemeriksaan scaffold pada 22 November 2026 menggunakan Windows, Node.js 22.14.0, npm 10.9.2, Expo 58.0.26, dan React Native 0.88.1. Belum ada pengujian fitur bisnis atau integrasi API nyata.
 
 | Pemeriksaan | Hasil aktual |
