@@ -10,6 +10,9 @@ class ReportCreate(BaseModel):
     latitude: float = Field(strict=True, ge=-90, le=90)
     longitude: float = Field(strict=True, ge=-180, le=180)
     description: str = Field(min_length=1, max_length=500)
+    incident_type: Literal["flood", "traffic", "obstacle"] | None = None
+    severity: Literal["low", "medium", "high"] | None = None
+    location_label: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class RoadReport(ReportCreate):

@@ -34,7 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="RUAS Core Service",
-        version="0.2.0",
+        version="0.3.0",
         description="RUAS health, authentication, and provisional road reports API.",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",

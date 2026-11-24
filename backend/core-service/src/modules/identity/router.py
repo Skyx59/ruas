@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.middleware.errors import ErrorResponse
 
 from .dependencies import CurrentUser, unauthorized
-from .models import AccessToken, User
+from .models import AccessToken, User, UserProfile
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -37,3 +37,11 @@ def login(
 @router.get("/me", responses={401: {"model": ErrorResponse}})
 def me(user: CurrentUser) -> User:
     return user
+
+
+@router.get("/me/profile", responses={401: {"model": ErrorResponse}})
+def profile(request: Request, user: CurrentUser) -> UserProfile:
+    return UserProfile(
+        account=user,
+        statistics=request.app.state.report_repository.statistics_for(user.id),
+    )

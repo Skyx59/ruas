@@ -1,12 +1,14 @@
 # Kontrak REST API
 
-API ini bersifat **provisional**. Base URL lokal melalui Nginx adalah `http://127.0.0.1`. Target STB setelah upgrade adalah `https://antislop.stei.fun`. Swagger UI tersedia pada `/api/docs` dan skema pada `/api/openapi.json`.
+API v0.3.0 ini bersifat **provisional**. STB belum up menurut pengguna pada 24 November 2026; endpoint yang dideskripsikan tersedia pada implementasi lokal, bukan klaim layanan publik sedang aktif. Base URL lokal melalui Nginx adalah `http://127.0.0.1`. Target STB setelah upgrade adalah `https://antislop.stei.fun`. Swagger UI tersedia pada `/api/docs` dan skema pada `/api/openapi.json`.
 
 | Method dan path | Anonim | USER | ADMIN | Respons sukses |
 | --- | --- | --- | --- | --- |
 | GET `/api/health` | Ya | Ya | Ya | `200` dan `{"status":"ok"}` |
 | POST `/api/auth/token` | Ya | Ya | Ya | `200` dan access token jika kredensial valid |
 | GET `/api/auth/me` | `401` | Ya | Ya | `200` dan identitas akun aktif |
+| GET `/api/auth/me/profile` | `401` | Ya | Ya | `200` dan identitas/statistik milik sendiri |
+| GET `/api/road-reports/mine` | `401` | Ya | Ya | `200` dan riwayat milik sendiri |
 | GET `/api/road-reports` | Ya | Ya | Ya | `200` dengan `items`, `limit`, dan `offset` |
 | GET `/api/road-reports/{report_id}` | Ya | Ya | Ya | `200` dengan detail laporan |
 | POST `/api/road-reports` | `401` | Ya | Ya | `201` dan header `Location` |
@@ -34,7 +36,7 @@ JWT tidak berisi role. API membaca role dan status akun langsung dari database. 
 
 ## Laporan kondisi jalan
 
-`latitude` dan `longitude` wajib berupa angka JSON dalam derajat desimal, masing-masing di rentang −90 sampai 90 dan −180 sampai 180. `description` berisi 1–500 karakter setelah trimming. Field tambahan ditolak. Daftar memuat laporan terbaru lebih dahulu dengan `limit` 1–100 (default 20) dan `offset` 0–2.147.483.647 (default 0).
+`latitude` dan `longitude` wajib berupa angka JSON dalam derajat desimal, masing-masing di rentang −90 sampai 90 dan −180 sampai 180. `description` berisi 1–500 karakter setelah trimming. Field tambahan di luar kontrak ditolak, termasuk `owner_id`, `role`, dan `verification_status` pada pembuatan laporan. Daftar memuat laporan terbaru lebih dahulu dengan `limit` 1–100 (default 20) dan `offset` 0–2.147.483.647 (default 0).
 
 ```sh
 printf 'Authorization: Bearer %s\n' "$TOKEN" |
@@ -56,7 +58,7 @@ Contoh respons `201` memiliki header `Location: /api/road-reports/3f07a63b-9381-
 }
 ```
 
-ADMIN dapat mengirim `{"verification_status":"verified"}` atau `{"verification_status":"rejected"}` ke endpoint PATCH. Laporan lama dan laporan baru berawal dari `pending`. Status terlihat pada respons detail maupun daftar, termasuk ketika dibaca tanpa login. Perubahan antarstatus final saat ini diizinkan sesuai kontrak sementara.
+ADMIN yang bukan pelapor dapat mengirim `{"verification_status":"verified"}` atau `{"verification_status":"rejected"}` ke endpoint PATCH. Laporan lama dan laporan baru berawal dari `pending`. Status terlihat pada respons detail maupun daftar, termasuk ketika dibaca tanpa login. Perubahan antarstatus final saat ini diizinkan sesuai kontrak sementara.
 
 ## Demonstrasi lewat Swagger UI
 
@@ -75,4 +77,47 @@ Kontrak RUAS, StepSafe, dan Health ditetapkan bersama pemilik masing-masing API.
 
 ## Status adapter mobile
 
-Client mobile menyediakan transport HTTP umum yang mengembalikan `Response`. `ApiService.js` dan `serviceAdapters.js` memisahkan operasi UI dari detail kontrak HTTP. Semua adapter penyedia masih kosong; adapter RUAS belum dipetakan ke endpoint, autentikasi, serta payload backend provisional yang didokumentasikan di atas. Kontrak StepSafe dan Health belum tersedia. Operasi tanpa adapter ditolak sebelum jaringan. Data contoh berlabel untuk preview UI berada terpisah dan tidak menjadi respons API atau fallback otomatis. Lihat [README mobile](../../mobile/README.md) untuk antarmuka internal tampilan dan [handoff](../integration/mobile-handoff.md) untuk kebutuhan pemilik layanan.
+Client mobile menyediakan transport HTTP umum yang mengembalikan `Response`. `ApiService.js` dan `serviceAdapters.js` memisahkan operasi UI dari detail kontrak HTTP. Adapter RUAS sudah memetakan login, profil, riwayat privat, buat/baca laporan, dan verifikasi ke endpoint yang didokumentasikan di atas. Dokumentasi StepSafe sudah diberikan tetapi belum dapat dibaca saat pemeriksaan; Health ditunda sesuai instruksi pengguna. Tidak ada endpoint mitra yang ditebak. Operasi tanpa adapter ditolak sebelum jaringan. Data contoh berlabel untuk preview UI berada terpisah dan tidak menjadi respons API atau fallback otomatis. Lihat [README mobile](../../mobile/README.md) untuk antarmuka internal tampilan dan [handoff](../integration/mobile-handoff.md) untuk kebutuhan pemilik layanan.
+
+## Metadata laporan dan kepemilikan v0.3.0
+
+Field tambahan yang diterima pada POST dan dikembalikan pada respons:
+
+| Field | Nilai | Aturan |
+| --- | --- | --- |
+| `incident_type` | `flood`, `traffic`, `obstacle`, atau `null` | Jenis kejadian; opsional demi kompatibilitas klien lama |
+| `severity` | `low`, `medium`, `high`, atau `null` | Keparahan klaim pelapor; bukan hasil evaluasi risiko otomatis |
+| `location_label` | String 1–200 karakter setelah trimming, atau `null` | Nama/label titik, bukan bukti hasil geocoding yang terverifikasi |
+
+```json
+{
+  "latitude": -6.89,
+  "longitude": 107.61,
+  "description": "Genangan pada sebagian badan jalan",
+  "incident_type": "flood",
+  "severity": "medium",
+  "location_label": "Titik yang dipilih"
+}
+```
+
+Pemilik ditetapkan server dari token aktif dan disimpan di database. `owner_id` tidak diterima dari client maupun dibuka pada response publik. Endpoint `/api/road-reports/mine` memakai `limit` dan `offset` yang sama dengan daftar publik, tetapi selalu memfilter berdasarkan akun login. Mengirim ID akun lain pada query tidak mengalihkan kepemilikan hasil.
+
+`GET /api/auth/me/profile` memuat `account` dengan skema identitas `/api/auth/me`, serta `statistics`:
+
+```json
+{
+  "reports": 2,
+  "verified": 1,
+  "confirmations": null
+}
+```
+
+Angka `reports` dan `verified` dihitung dari database untuk akun tersebut. `verified` berarti laporan milik akun yang saat ini berstatus verified, bukan total historis semua tindakan moderasi. `confirmations` masih `null` karena fitur konfirmasi warga belum diimplementasikan; jangan mengartikannya sebagai nol.
+
+Semua laporan baru berstatus `pending`. ADMIN memperoleh `403` jika mencoba memverifikasi atau menolak laporan miliknya sendiri. Laporan lama yang pemiliknya tidak tercatat tidak diasosiasikan ke akun secara otomatis. Pemeriksaan keaslian kejadian, TTL, deduplikasi, serta rate limit pembuatan laporan masih merupakan usulan pada [evaluasi domain](../ddd/reporting-and-routing.md).
+
+## Migrasi dan batas implementasi
+
+Startup menambah kolom nullable serta indeks kepemilikan secara aditif. ID, koordinat, deskripsi, waktu, dan status data lama dipertahankan. Metadata kosong tidak diisi dengan tebakan. Backup tetap wajib sebelum operator menerapkan upgrade pada data penting. Tidak ada migrasi/deployment pada STB yang dijalankan dalam revisi ini.
+
+Endpoint registrasi, rekomendasi rute, cuaca, upload foto, revokasi/refresh token, serta konfirmasi warga belum tersedia. Lihat [status StepSafe](../integration/stepsafe.md); domain dokumentasi yang diketahui tidak berarti kontrak HTTP sudah terbaca.

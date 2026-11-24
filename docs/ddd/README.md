@@ -12,3 +12,5 @@ Road Condition Management menyediakan alur buat, daftar, dan baca laporan, serta
 Keempat konteks merupakan modul internal satu core service. StepSafe dan Health berada di luar batas RUAS, memiliki backend serta data masing-masing, dan terhubung melalui kontrak REST. Tidak ada database bersama atau penggabungan source code.
 
 Artefak berikutnya: ubiquitous language, context map, aggregate dan invariant, use case, kebijakan akses antarmodul, serta aturan dan versi pembobotan risiko. Nilai bobot, ambang, sumber data, dan penanganan data kedaluwarsa harus disepakati sebelum implementasi.
+
+Revisi laporan/profil memakai kepemilikan dari token dan larangan verifikasi laporan sendiri. [Tanggapan evaluasi](reporting-and-routing.md) menjelaskan usulan anti-abuse, perhitungan ETA per segmen, perbedaan peta dan routing, serta penundaan Faskes. Usulan yang belum disepakati tidak dinyatakan sebagai fitur aktif.

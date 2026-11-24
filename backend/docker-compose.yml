@@ -1,7 +1,7 @@
 services:
   core-service:
     build: ./core-service
-    image: ruas-core:0.2.0
+    image: ruas-core:0.3.0
     restart: unless-stopped
     cpus: 0.50
     mem_limit: 256m

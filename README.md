@@ -5,9 +5,9 @@ RUAS menyiapkan rekomendasi rute perkotaan dengan mempertimbangkan risiko banjir
 
 ## Status proyek
 
-Backend menyediakan health check, login OAuth2 Bearer JWT, identitas pengguna, dan alur buat, daftar, serta baca laporan kondisi jalan. Aksi verifikasi tersedia untuk ADMIN. Kontrak laporan bersifat sementara (*provisional*) dan menunggu persetujuan kelompok. Mobile menggunakan Expo JavaScript dengan navigasi Stack + Tab dan tujuh layar placeholder.
+Backend menyediakan health check, login OAuth2 Bearer JWT, identitas pengguna, dan alur buat, daftar, serta baca laporan kondisi jalan. Aksi verifikasi tersedia untuk ADMIN. Kontrak laporan bersifat sementara (*provisional*) dan menunggu persetujuan kelompok. Mobile menggunakan Expo JavaScript dengan sembilan layar, navigasi Stack + Tab, serta modal pemilihan lokasi.
 
-Mobile sudah memiliki sembilan layar JavaScript/Expo berdasarkan Figma v3, navigasi Stack + Tab, state bersama, form dan validasi, serta antarmuka adapter RUAS, StepSafe, dan Health. Adapter mobile belum terhubung ke API backend yang tersedia. Lihat [README mobile](mobile/README.md) untuk menjalankan aplikasi dan membedakan mode layanan dari preview demo, serta [kontrak API](docs/api/README.md) untuk kontrak backend provisional.
+Mobile sudah memiliki sembilan layar JavaScript/Expo berdasarkan Figma v3, navigasi Stack + Tab, state bersama, form dan validasi, serta antarmuka adapter RUAS, StepSafe, dan Health. Adapter RUAS terhubung ke kontrak backend lokal: login JWT, profil/kontribusi, riwayat milik sendiri, serta buat/baca/verifikasi laporan. Rekomendasi rute, cuaca, registrasi, upload foto, dan konfirmasi warga belum tersedia. StepSafe memiliki URL dokumentasi yang sudah diberikan, tetapi kontraknya belum dapat dibaca; Health/Faskes ditunda. Lihat [README mobile](mobile/README.md) untuk menjalankan aplikasi dan membedakan mode layanan dari preview demo, serta [kontrak API](docs/api/README.md) untuk kontrak backend provisional.
 
 Hasil pengujian backend dan pemeriksaan scaffold terdahulu dicatat di [laporan testing](docs/testing/README.md). Status implementasi Person B terbaru berada di README mobile; laporan testing formal fitur mobile dan APK belum tersedia.
 
@@ -76,7 +76,7 @@ Client ── HTTPS ── Cloudflare Tunnel ── localhost:80 ── Nginx
                                                  SQLite di volume Docker
 ```
 
-RUAS memakai modular monolith berbasis Python 3.12, FastAPI, Pydantic v2, Uvicorn, dan SQLite. Satu core service menampung Road Condition Management, Route Recommendation, Environmental Data Integration, serta Identity and Access Management. Road Condition Management menyimpan laporan dan status verifikasi. Identity and Access Management menyediakan akun SQLite, Argon2id, access token JWT dengan masa berlaku 30 menit, dan RBAC USER/ADMIN. Route Recommendation dan Environmental Data Integration masih berupa struktur kode. Nginx Alpine menjadi gateway HTTP dan mempertahankan prefix `/api` saat meneruskan request. Cloudflare Tunnel yang sudah berjalan pada STB menangani akses publik HTTPS.
+RUAS memakai modular monolith berbasis Python 3.12, FastAPI, Pydantic v2, Uvicorn, dan SQLite. Satu core service menampung Road Condition Management, Route Recommendation, Environmental Data Integration, serta Identity and Access Management. Road Condition Management menyimpan laporan dan status verifikasi. Identity and Access Management menyediakan akun SQLite, Argon2id, access token JWT dengan masa berlaku 30 menit, dan RBAC USER/ADMIN. Route Recommendation dan Environmental Data Integration masih berupa struktur kode. Nginx Alpine menjadi gateway HTTP dan mempertahankan prefix `/api` saat meneruskan request. Cloudflare Tunnel menangani akses publik HTTPS ketika STB dihidupkan. Pada 24 November 2026, pengguna mengonfirmasi STB belum up; hal ini bukan kegagalan kode lokal dan tidak diperbaiki dengan deployment otomatis.
 
 Compose membatasi core service ke 0,5 CPU dan 256 MiB, serta gateway ke 0,25 CPU dan 64 MiB. Port 80 diikat ke loopback host untuk Cloudflared. Core service berada di network internal dan menggunakan volume `core-data` untuk SQLite.
 
@@ -99,6 +99,8 @@ Respons health yang diharapkan adalah `{"status":"ok"}`. Swagger UI tersedia di 
 | GET | `/api/health` | Memeriksa kesiapan API dan akses baca SQLite |
 | POST | `/api/auth/token` | Login dengan form dan menerima JWT |
 | GET | `/api/auth/me` | Membaca identitas akun yang login |
+| GET | `/api/auth/me/profile` | Membaca profil dan kontribusi akun yang login |
+| GET | `/api/road-reports/mine` | Membaca riwayat milik akun yang login |
 | POST | `/api/road-reports` | Membuat laporan sebagai USER atau ADMIN |
 | GET | `/api/road-reports` | Membaca daftar dengan parameter `limit` dan `offset` |
 | GET | `/api/road-reports/{report_id}` | Membaca detail laporan menurut UUID |
@@ -116,7 +118,7 @@ Contoh payload, respons, dan status error tersedia di [Kontrak API](docs/api/REA
 
 - Node.js LTS 22.13+ pada lini 22, 24.3+ pada lini 24, atau 26+ sesuai `engines` React Native 0.88.1, serta npm. Pemeriksaan scaffold menggunakan Node.js 22.14.0.
 - Akses registry npm untuk instalasi dependency.
-- Expo Go yang kompatibel dengan SDK pada `mobile/package.json`, atau development build yang sesuai. Android emulator dapat digunakan melalui Android Studio; simulator iOS memerlukan macOS/Xcode.
+- Expo Go yang kompatibel dengan SDK pada `mobile/package.json`. Tidak ada custom development build yang diwajibkan oleh implementasi ini. Android emulator dapat digunakan melalui Android Studio; simulator iOS memerlukan macOS/Xcode.
 - Akun dan project Expo/EAS serta konfigurasi signing diperlukan pada tahap APK release, bukan untuk mengisi scaffold.
 
 Template awal berasal dari [template blank resmi Expo](https://docs.expo.dev/more/create-expo/), tanpa TypeScript atau Expo Router. Navigasi menggunakan React Navigation. Status pemeriksaan aktual dicatat di [laporan testing](docs/testing/README.md).
@@ -130,7 +132,7 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 npm start
 ```
 
-Salin environment hanya jika `.env` belum ada. Base URL boleh tetap kosong untuk membuka aplikasi; pilih Home → Lihat demo untuk preview data contoh berlabel. Untuk pemanggilan nyata, isi URL resmi dan implementasikan adapter berdasarkan kontrak masing-masing kelompok. Tidak ada request ke server contoh.
+Salin environment hanya jika `.env` belum ada. Base URL boleh tetap kosong untuk membuka aplikasi; pilih Home → Lihat demo untuk preview data contoh berlabel. Untuk RUAS, isi origin server tanpa suffix `/api` karena adapter sudah memakai prefix tersebut. Untuk mitra, implementasikan adapter hanya setelah kontrak aktual dan mekanisme akses terverifikasi. Tidak ada request ke server contoh.
 
 ```text
 EXPO_PUBLIC_RUAS_API_BASE_URL=
@@ -138,7 +140,7 @@ EXPO_PUBLIC_STEPSAFE_API_BASE_URL=
 EXPO_PUBLIC_HEALTH_API_BASE_URL=
 ```
 
-Nilai `EXPO_PUBLIC_` terlihat dalam bundle aplikasi menurut [dokumentasi environment Expo](https://docs.expo.dev/guides/environment-variables/). Jangan memasukkan API key rahasia, password, atau secret server. Client RUAS, StepSafe, dan Health terpisah serta tidak mengasumsikan endpoint, skema payload, atau token bersama. Transport umum mengembalikan `Response`; parsing dan autentikasi ditambahkan setelah kontrak disepakati. Tidak ada request API otomatis atau data integrasi palsu.
+Nilai `EXPO_PUBLIC_` terlihat dalam bundle aplikasi menurut [dokumentasi environment Expo](https://docs.expo.dev/guides/environment-variables/). Jangan memasukkan API key rahasia, password, atau secret server. Client RUAS, StepSafe, dan Health terpisah serta tidak mengasumsikan endpoint, skema payload, atau token bersama. Transport umum mengembalikan `Response`, membatasi request hingga 15 detik, dan mempertahankan status error HTTP. Adapter RUAS menangani autentikasi/parsing dan memuat laporan otomatis. Tidak ada data integrasi palsu atau penerusan token RUAS ke mitra.
 
 Perintah pemeriksaan dari `mobile/` setelah instalasi:
 
@@ -148,7 +150,7 @@ npx expo install --check
 npm test -- --runInBand
 ```
 
-Test mobile yang sudah ada berasal dari scaffold; belum membuktikan fitur bisnis, API nyata, atau perilaku pada perangkat. UI, form/validasi, pemilihan lokasi/fasilitas, dan pilihan rute sudah tersedia. Autentikasi serta pelaporan nyata di mobile menunggu implementasi adapter terhadap kontrak backend provisional; rekomendasi rute masih menunggu implementasi backend. Penyelesaian loading/error/empty menyeluruh, laporan testing formal fitur mobile, dan release tetap ditunda.
+Test mobile yang sudah ada berasal dari scaffold; belum membuktikan fitur bisnis, API nyata, atau perilaku pada perangkat. UI, form/validasi, pemilihan lokasi/fasilitas, dan pilihan rute sudah tersedia. Autentikasi serta pelaporan nyata memakai adapter kontrak backend yang tersedia; rekomendasi rute masih menunggu implementasi backend. Penyelesaian loading/error/empty menyeluruh, laporan testing formal fitur mobile, dan release tetap ditunda.
 
 ## Persiapan APK
 
@@ -166,3 +168,9 @@ Sebelum build, tetapkan Android application/package ID yang disepakati, hubungka
 - `docs/demo/`: tempat materi demo setelah tersedia.
 
 Kelompok masih perlu menetapkan kontrak dan versi REST final, aturan moderasi dan transisi status laporan, kebijakan akun dan publikasi data, sumber data lingkungan, serta pembobotan risiko. Akses baca publik masih provisional untuk demo. Rekomendasi rute, pembobotan risiko, integrasi cuaca/banjir, serta integrasi StepSafe dan Health masih menunggu kontrak dan aturan domain. README dan tautan dokumentasinya dapat digunakan sebagai materi README.pdf TST.
+
+## Revisi laporan dan integrasi, 24 November 2026
+
+Backend v0.3.0 menyimpan jenis kejadian, keparahan, label lokasi, dan pemilik laporan. Pemilik berasal dari token, bukan input pengguna. Riwayat dan statistik diambil melalui endpoint privat; identitas pemilik tidak ditambahkan ke respons laporan publik. Migrasi bersifat aditif: laporan lama dipertahankan dengan metadata/pemilik kosong, tanpa penebakan kategori atau kepemilikan.
+
+UI, layout, navigasi, serta Figma v3 tetap dipertahankan. Health/Faskes tidak dikembangkan lebih lanjut sampai informasi kelompok final. [Status StepSafe](docs/integration/stepsafe.md) dan [rekomendasi pelaporan serta perhitungan durasi](docs/ddd/reporting-and-routing.md) mencatat batas implementasi dan keputusan yang masih perlu disepakati. Tidak ada pengubahan penyedia peta, deployment, atau akses konfigurasi STB.

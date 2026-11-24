@@ -40,3 +40,9 @@ Dari terminal lain, panggil `curl -fsS http://127.0.0.1:8000/api/health`. Path S
 Compose membaca `RUAS_LOG_LEVEL`, `RUAS_JWT_SECRET`, dan `RUAS_GATEWAY_PORT` dari environment shell atau `backend/.env` ketika dijalankan dari `backend/`. Gunakan `backend/.env.example` sebagai acuan. Untuk Python langsung, ekspor variabel melalui shell. Volume Compose dipasang di `/app/data` dan image core service berjalan dengan UID/GID `10001:10001`. Image memasang dependency runtime dengan wheel, tanpa compiler atau dependency pengujian.
 
 Contoh request, response, dan status HTTP tersedia di [Kontrak API](../../docs/api/README.md). Panduan CLI, limit login, dan model token tersedia di [Modul Identity](src/modules/identity/README.md). Rekomendasi, skor risiko, feed lingkungan, dan aturan moderasi final masih menunggu kontrak domain bersama.
+
+## Perubahan v0.3.0
+
+Metadata opsional `incident_type`, `severity`, dan `location_label` disimpan bersama laporan. Pemilik laporan berasal dari token aktif; tidak diekspos pada daftar publik. `GET /api/road-reports/mine` menyediakan riwayat privat dengan pagination, dan `GET /api/auth/me/profile` menyediakan statistik kontribusi dari database. ADMIN tidak dapat memverifikasi laporan sendiri. Konfirmasi warga tetap belum tersedia; statistik konfirmasi bernilai null.
+
+Migrasi menambahkan kolom nullable dan indeks kepemilikan, mempertahankan data lama tanpa menebak kategori/pemilik. Uji migrasi dan API terdapat di `tests/test_reporting_profile.py` serta `tests/test_migration.py`. Compose memakai tag `ruas-core:0.3.0`; operator perlu backup dan build ulang pada tahap deployment yang terpisah. STB belum up dan tidak diubah dalam revisi ini.

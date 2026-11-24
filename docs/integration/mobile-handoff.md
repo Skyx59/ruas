@@ -16,7 +16,7 @@ Keempat bounded context internal tetap berada di satu core service. Integrasi li
 | Kelompok StepSafe | Pemilik API dan base URL; input rute atau koordinat; format dan makna Walkability Index, kondisi trotoar serta aksesibilitas; satuan/cakupan; mekanisme akses |
 | Kelompok Health | Identitas kelompok penyedia dan base URL; pencarian/kategori; data fasilitas dan koordinat; format detail serta mekanisme akses |
 
-Sumber kontrak yang dapat diterima: OpenAPI, Postman, atau implementasi backend yang disepakati. Repository saat ini tidak memiliki kontrak aktual untuk ketiga penyedia. Karena itu tidak ada endpoint yang terhubung dan tidak ada integrasi nyata yang diklaim berhasil.
+Sumber kontrak yang dapat diterima: OpenAPI, Postman, atau implementasi backend yang disepakati. Kontrak RUAS lokal sudah tersedia dan adapter mobile terhubung. Dokumentasi StepSafe diberikan pada 24 November 2026 tetapi membalas 530/1033, sehingga kontrak operasionalnya belum terbaca. Health/Faskes ditunda. Tidak ada integrasi lintas kelompok yang diklaim berhasil.
 
 `mobile/src/services/serviceAdapters.js` menyediakan tempat adapter terpisah. `ApiService.js` hanya memanggil operasi adapter yang terdaftar; operasi tanpa adapter melempar `CONTRACT_UNAVAILABLE` sebelum jaringan. Nama operasi dan model tampilan di [README mobile](../../mobile/README.md) adalah antarmuka internal UI, bukan skema REST yang ditetapkan sepihak.
 
@@ -25,7 +25,7 @@ Base URL berada di environment publik mobile. API key privat tidak boleh disemat
 ## Batas hasil implementasi
 
 - Butir 1: source mobile dan README tersedia di monorepo lokal; publikasi perubahan dilakukan oleh pengguna.
-- Butir 2: sembilan layar, Stack + Tab, state bersama, input/chip, lokasi, pilihan fasilitas/rute, serta validasi tersedia. Autentikasi dan mutasi nyata menunggu kontrak RUAS sehingga butir ini masih parsial.
-- Butir 3: ApiService dan tiga adapter/interface tersedia, tetapi request/respons nyata ketiga penyedia terblokir kontrak sehingga integrasi belum selesai.
+- Butir 2: sembilan layar, Stack + Tab, state bersama, input/chip, lokasi, pilihan fasilitas/rute, serta validasi tersedia. Login, laporan bertipe, riwayat/kontribusi, dan verifikasi ADMIN memakai kontrak RUAS lokal; rute, cuaca, registrasi, foto, dan konfirmasi warga masih blocked.
+- Butir 3: ApiService dan tiga adapter/interface tersedia, tetapi RUAS memakai kontrak aktual, sementara StepSafe dan Health masih blocked sehingga syarat dua kelompok belum selesai.
 - Data demo terpisah dan diberi label; tidak menjadi fallback integrasi. Demo tidak membuat sesi, mengirim foto/laporan, atau mengonfirmasi kejadian nyata.
-- Butir 4–6, build release, APK, video, PDF testing, deployment, backend, dan perubahan STB tidak dikerjakan pada tahap ini.
+- Butir 4–6, build release, APK, video, PDF testing, deployment, dan perubahan STB tidak dinyatakan selesai. Revisi backend v0.3.0 untuk kontrak laporan/profil sudah diizinkan pengguna dan diuji lokal; lihat [kontrak API](../api/README.md).
