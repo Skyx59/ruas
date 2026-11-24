@@ -43,6 +43,19 @@ def initialize_database(path: Path) -> None:
                 CHECK (verification_status IN ('pending', 'verified', 'rejected'))
                 """
             )
+        additions = {
+            "incident_type": "TEXT CHECK (incident_type IN ('flood', 'traffic', 'obstacle'))",
+            "severity": "TEXT CHECK (severity IN ('low', 'medium', 'high'))",
+            "location_label": "TEXT",
+            "owner_id": "TEXT REFERENCES users(id) ON DELETE SET NULL",
+        }
+        for name, definition in additions.items():
+            if name not in columns:
+                connection.execute(f"ALTER TABLE road_reports ADD COLUMN {name} {definition}")
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS road_reports_owner_recent "
+            "ON road_reports (owner_id, created_at DESC, id DESC)"
+        )
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS users (

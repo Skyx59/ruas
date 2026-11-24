@@ -1,6 +1,21 @@
 # Laporan testing
 
-## Authentication dan authorization
+## Status revisi 24 November 2026
+
+Pemeriksaan lokal Windows memakai Python 3.13.1 dan Node.js 22.14.0. Backend v0.3.0: **53 tes lulus** mencakup metadata laporan, pemilik dari token, riwayat/statistik privat, larangan verifikasi sendiri, migrasi aditif/idempotensi, dan regresi JWT/RBAC. Jest mobile: **9 tes lulus** untuk batas konfigurasi client; ini bukan bukti seluruh fitur mobile telah diuji oleh Jest. Integrasi adapter aktual ke Uvicorn lokal lulus untuk pemetaan jenis/keparahan, filter kategori, pemisahan riwayat dua akun, statistik database, verifikasi ADMIN, penolakan verifikasi sendiri, dan privasi pemilik pada endpoint publik. Timeout HTTP juga diperiksa. Bundle JavaScript Android, konfigurasi Compose v0.3.0, dan `pip check` lulus. Hash 26 file UI sebelum/sesudah identik. Pengujian Expo Go pada perangkat fisik serta build ulang image ARM64 belum dilakukan dalam revisi ini.
+
+Perubahan tidak mengakses STB, tidak menghidupkan layanan publik, dan tidak mengubah UI/Figma. STB belum up menurut pengguna. Dokumentasi StepSafe pada URL yang diberikan membalas 530/1033 sehingga integrasi mitra belum terverifikasi. Health/Faskes ditunda. Hasil lama di bawah merupakan catatan historis, bukan status fitur terbaru.
+
+| Kebutuhan PWAM | Status aktual |
+| --- | --- |
+| Repo/README | Sumber dan petunjuk sudah diperbarui; akun uji diprovisikan operator, bukan login demo palsu |
+| Layar/navigasi/form/login | Sembilan layar dan modal tersedia; autentikasi, laporan bertipe, riwayat/kontribusi menggunakan kontrak lokal |
+| API sendiri + dua kelompok | RUAS terhubung; StepSafe menunggu kontrak yang bisa dibaca; Health ditunda |
+| Loading/error/empty/API mati | Penanganan dasar dan timeout 15 detik; belum dinyatakan lengkap |
+| Jest/laporan formal | Tes awal dan regresi backend tersedia; laporan PWAM PDF/uji integrasi dua kelompok belum tersedia |
+| APK | Profil EAS tersedia; build APK/signing/package ID final belum tersedia |
+
+## Historis: authentication dan authorization
 
 Pengujian development pada 23 November 2026 menggunakan macOS ARM64, Python 3.12.3, Docker Engine 29.7.2 Linux ARM64, dan Docker Compose v5.4.0.
 
@@ -61,7 +76,7 @@ Jest disiapkan di mobile dengan preset `jest-expo`. Test awal memeriksa bahwa re
 
 Checklist pengembangan PWAM:
 
-| Kebutuhan | Status scaffold |
+| Kebutuhan | Status scaffold historis |
 | --- | --- |
 | Stack + Tab, minimal empat layar | Struktur navigasi dan tujuh layar placeholder tersedia |
 | Login | Layar tersedia; form dan autentikasi belum diimplementasikan |

@@ -35,7 +35,11 @@ def test_additive_migration_preserves_legacy_rows_and_accepts_legacy_writes(sett
         assert client.get(path).json()["verification_status"] == "pending"
         with connection_to(settings.db_path) as connection:
             row = connection.execute("SELECT * FROM road_reports WHERE id = ?", (first_id,)).fetchone()
-            assert tuple(row) == (*original, "pending")
+            assert tuple(row)[:6] == (*original, "pending")
+            assert row["incident_type"] is None
+            assert row["severity"] is None
+            assert row["location_label"] is None
+            assert row["owner_id"] is None
             connection.execute(INSERT_LEGACY_REPORT, (second_id, *original[1:]))
             connection.execute(
                 "UPDATE road_reports SET verification_status = ? WHERE id = ?", ("verified", first_id)

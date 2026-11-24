@@ -24,6 +24,7 @@ export function AppProvider({ children }) {
   const [mapSelection, setMapSelection] = useState(null);
   const [walkability, setWalkability] = useState(null);
   const dataVersion = useRef(0);
+  const sessionVersion = useRef(0);
   const routeVersion = useRef(0);
 
   const refreshData = useCallback(async () => {
@@ -42,7 +43,13 @@ export function AppProvider({ children }) {
     }));
     if (version !== dataVersion.current) return;
     const updates = Object.fromEntries(results.filter(result => result.status === 'fulfilled').map(result => result.value));
-    setData(previous => ({ ...previous, ...updates }));
+    setData(previous => {
+      const reports = updates.reports || previous.reports;
+      const owned = updates.profile?.reports || previous.profile?.reports || [];
+      const combined = new Map(reports.map(report => [report.id, report]));
+      for (const report of owned) combined.set(report.id, { ...combined.get(report.id), ...report });
+      return { ...previous, ...updates, reports: [...combined.values()] };
+    });
     setDataMessage(results.find(result => result.status === 'rejected')?.reason?.message || '');
     const account = updates.profile?.account;
     if (account) setSession(previous => previous && JSON.stringify(previous.account) !== JSON.stringify(account) ? { ...previous, account } : previous);
@@ -85,6 +92,7 @@ export function AppProvider({ children }) {
   }
 
   function changeDataMode(enabled) {
+    sessionVersion.current += 1;
     dataVersion.current += 1;
     routeVersion.current += 1;
     setDemoEnabled(enabled);
@@ -132,6 +140,7 @@ export function AppProvider({ children }) {
   async function login(values) {
     const result = await ApiService.ruas.login(values);
     if (!result?.account?.id || !result.account.displayName) throw new Error('Adapter autentikasi belum menghasilkan sesi akun yang valid.');
+    sessionVersion.current += 1;
     setData(emptyData());
     if (demoEnabled) changeDataMode(false);
     setSession(result);
@@ -145,6 +154,7 @@ export function AppProvider({ children }) {
     try {
       if (ApiService.hasOperation('ruas', 'logout')) await ApiService.ruas.logout(undefined, session);
     } finally {
+      sessionVersion.current += 1;
       dataVersion.current += 1;
       routeVersion.current += 1;
       setSession(null);
@@ -158,17 +168,37 @@ export function AppProvider({ children }) {
 
   async function submitReport(draft) {
     if (demoEnabled) throw new Error('Mode demo hanya untuk pratinjau. Laporan dan foto tidak dikirim atau disimpan sebagai laporan nyata.');
+    const version = sessionVersion.current;
     const result = await ApiService.ruas.createReport(draft, session);
+    if (version !== sessionVersion.current) throw new Error('Laporan diterima server, tetapi sesi berubah. Buka akun pengirim untuk melihat riwayat.');
+    dataVersion.current += 1;
     if (!result?.id) throw new Error('Adapter laporan belum menghasilkan data laporan yang valid.');
-    setData(previous => ({ ...previous, reports: [result, ...previous.reports.filter(report => report.id !== result.id)] }));
+    setData(previous => {
+      const profile = previous.profile;
+      const statistics = profile?.statistics;
+      return {
+        ...previous,
+        reports: [result, ...previous.reports.filter(report => report.id !== result.id)],
+        profile: profile ? {
+          ...profile,
+          reports: [result, ...(profile.reports || []).filter(report => report.id !== result.id)],
+          statistics: statistics ? { ...statistics, reports: statistics.reports + 1 } : statistics,
+        } : profile,
+      };
+    });
+    refreshData();
     return result;
   }
 
   async function confirmReport(reportId, condition) {
     if (demoEnabled) throw new Error('Laporan demo tidak dapat diverifikasi sebagai kejadian nyata. Tidak ada konfirmasi yang dikirim.');
+    const version = sessionVersion.current;
     const result = await ApiService.ruas.confirmReport({ reportId, condition }, session);
+    if (version !== sessionVersion.current) throw new Error('Status diproses server, tetapi sesi berubah. Muat ulang laporan untuk melihat hasilnya.');
+    dataVersion.current += 1;
     if (!result?.id || result.id !== reportId) throw new Error('Adapter konfirmasi belum menghasilkan laporan yang sesuai.');
-    setData(previous => ({ ...previous, reports: previous.reports.map(report => report.id === reportId ? result : report) }));
+    setData(previous => ({ ...previous, reports: previous.reports.map(report => report.id === reportId ? { ...report, ...result } : report) }));
+    refreshData();
   }
 
   const reports = demoEnabled ? demoReports : data.reports;
